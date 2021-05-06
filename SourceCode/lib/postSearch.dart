@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 class PostSearch extends StatefulWidget {
   @override
@@ -8,8 +7,8 @@ class PostSearch extends StatefulWidget {
 
 class _PostSearchState extends State<PostSearch> {
 
-  List<String> previous_searches = ['test1', 'test1', 'test1', 'test1', 'test1', 'test1', 'test1', 'test1', 'test1', 'test1', ];
-  List<String> recommended_searches = ['test1', 'test1', 'test1', 'test1',];
+  List<String> _previousSearches = ['test1', 'test1', 'test1', 'test1', 'test1', 'test1', 'test1', 'test1', 'test1', 'test1', ];
+  List<String> _recommendedSearches = ['test1', 'test1', 'test1', 'test1',];
 
   TextEditingController _controller;
 
@@ -32,7 +31,7 @@ class _PostSearchState extends State<PostSearch> {
           children: [
             Row(
               children: [
-                FlatButton(
+                TextButton(
                     onPressed: () => {
                       Navigator.pop(context)
                     },
@@ -40,6 +39,7 @@ class _PostSearchState extends State<PostSearch> {
                 ),
                 Expanded(
                   child: TextField(
+                    autofocus: true,
                     onChanged: (search) {
                       print('search in post search changed to: $search');
                     },
@@ -53,10 +53,10 @@ class _PostSearchState extends State<PostSearch> {
             Container(
               height: 200,
               child: ListView.builder(
-                  itemCount: previous_searches.length,
+                  itemCount: _previousSearches.length,
                   physics: ScrollPhysics(),
                   itemBuilder: (BuildContext context, int index) {
-                    return FlatButton(
+                    return TextButton(
                       onPressed: () => {
 
                       },
@@ -64,7 +64,7 @@ class _PostSearchState extends State<PostSearch> {
                         padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                         child: Row(
                           children: [
-                            Text(previous_searches[index]),
+                            Text(_previousSearches[index]),
                             Icon(Icons.close),
                           ],
                         ),
@@ -79,10 +79,10 @@ class _PostSearchState extends State<PostSearch> {
             ),          Text('Recommended for you'),
             Expanded(
               child: ListView.builder(
-                  itemCount: recommended_searches.length,
+                  itemCount: _recommendedSearches.length,
                   physics: ScrollPhysics(),
                   itemBuilder: (BuildContext context, int index) {
-                    return FlatButton(
+                    return TextButton(
                       onPressed: () => {
 
                       },
@@ -91,7 +91,7 @@ class _PostSearchState extends State<PostSearch> {
                         child: Row(
                           children: [
                             Icon(Icons.folder),
-                            Text(previous_searches[index]),
+                            Text(_previousSearches[index]),
                           ],
                         ),
                       ),

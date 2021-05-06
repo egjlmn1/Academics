@@ -1,9 +1,10 @@
-import 'dart:io';
-
 import 'package:academics/folders.dart';
 import 'package:academics/home.dart';
+import 'package:academics/profile.dart';
 import 'package:academics/upload.dart';
+import 'package:academics/inbox.dart';
 import 'package:flutter/material.dart';
+
 
 class MainPage extends StatefulWidget {
   @override
@@ -11,9 +12,8 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
-  Page _selectedPage = Page.home;
-  Page _previousPage = Page.home;
-  List<StatefulWidget> pages = [HomePage(), FoldersPage(), null, null, null];
+  Page _selectedPage = Page.inbox;
+  List<StatefulWidget> pages = [HomePage(), FoldersPage(), null, InboxPage(), ProfilePage()];
   OverlayEntry _uploadOverlay;
 
 
@@ -52,7 +52,17 @@ class _MainPageState extends State<MainPage> {
               icon: Icon(Icons.upload_rounded),
               label: 'Upload',
             ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.inbox),
+              label: 'Inbox',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person_rounded),
+              label: 'Profile',
+            ),
           ],
+          unselectedItemColor: Colors.black12,
+          showUnselectedLabels: true,
           currentIndex: _selectedPage.index,
           selectedItemColor: Colors.amber[800],
           onTap: _onItemTapped,
@@ -66,30 +76,12 @@ class _MainPageState extends State<MainPage> {
       Overlay.of(context).insert(_uploadOverlay);
     } else {
       setState(() {
-        _previousPage = _selectedPage;
         _selectedPage = Page.values[index];
       });
     }
   }
   Widget getPage(Page p) {
     return pages[p.index];
-    switch (p) {
-      case Page.home:
-        return HomePage();
-      case Page.folders:
-        return FoldersPage();
-      case Page.upload:
-        //return CreatePage(_previousPage);
-        break;
-      case Page.inbox:
-        break;
-      case Page.profile:
-        return MaterialApp(
-
-        );
-      default:
-
-    }
   }
 }
 

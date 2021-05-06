@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "545390422653",
+    "project_id": "academics-40948",
+    "storage_bucket": "academics-40948.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:545390422653:android:a92940f7ae6a4e66311f14",
+        "android_client_info": {
+          "package_name": "com.lindana.academics"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "545390422653-2572987php74tu93vm4ao8blqp44le16.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCTB-kFdBnraFyronwTnGRAqbPUrSozPXs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "545390422653-2572987php74tu93vm4ao8blqp44le16.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

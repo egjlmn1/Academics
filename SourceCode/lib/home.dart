@@ -1,13 +1,21 @@
+import 'dart:async';
+import 'dart:convert';
+
+import 'package:academics/postUtils.dart';
 import 'package:academics/schemes.dart';
 import 'package:flutter/material.dart';
+
+
 
 class HomePage extends StatefulWidget {
   @override
   _HomePageState createState() => _HomePageState();
 }
 
+
 class _HomePageState extends State<HomePage> {
 
+  Future<List<ShowPost>> futurePosts;
 
   List<ShowPost> posts = [
     ShowPost(
@@ -60,6 +68,12 @@ class _HomePageState extends State<HomePage> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    futurePosts = fetchPosts();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black12,
@@ -70,7 +84,7 @@ class _HomePageState extends State<HomePage> {
             color: Colors.white,
             child: Column(
               children: [
-                FlatButton(
+                TextButton(
                   onPressed: () => {
                     Navigator.pushNamed(context, '/post_search')
                   },
@@ -100,94 +114,10 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
           Expanded(
-            child: ListView.builder(
-                itemCount: posts.length,
-                physics: ScrollPhysics(),
-                itemBuilder: (BuildContext context, int index) {
-                  return Container(
-                    child: createPost(index),
-                  );
-                }
-            ),
+            child: createPosts(futurePosts),
           ),
         ],
       ),
     );
   }
-
-  Widget createPost(int index) {
-    ShowPost post = posts[index];
-    return Card(
-      child: Column(
-        children: [
-          createPostTopBar(post),
-          Divider(color: Colors.black),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 5, vertical: 5),
-            alignment: Alignment.topLeft,
-            child: Text(post.title,style: TextStyle(fontWeight: FontWeight.bold),),
-          ),
-          Container(
-            alignment: Alignment.topLeft,
-            child: post.typeData.createWidget(),
-          ),
-          Divider(color: Colors.black),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                Icon(Icons.arrow_upward),
-                Text(post.votes.toString()),
-                Icon(Icons.share),
-              ],
-            ),
-          ),
-        ],
-      )
-    );
-  }
-
-  Widget createPostTopBar(ShowPost post) {
-    Widget top = Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(post.type.toString().split('.')[1]),
-        Text(post.folder.split('/').last),
-      ],
-    );
-    if (post.university == null) {
-      return Container(
-        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        child: Column(
-          children: [
-            top,
-            Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                Text(post.username),
-              ],
-            ),
-          ],
-        ),
-      );
-    } else {
-      return Container(
-        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        child: Column(
-          children: [
-            top,
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(post.username),
-                Text(post.university),
-              ],
-            ),
-          ],
-        ),
-      );
-    }
-  }
-
 }

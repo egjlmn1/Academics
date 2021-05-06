@@ -1,5 +1,5 @@
-
-
+import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -12,36 +12,98 @@ class ShowPost {
   final int votes;
   final List<String> tags;
 
-  final PostType type;
+  final String type;
   final PostDataWidget typeData;
 
 
   ShowPost({this.tags, this.votes, this.username, this.folder, this.title, this.university, this.type, this.typeData});
+
+  static PostDataWidget getData(String type, Map<String, dynamic> data) {
+    switch(type) {
+      case PostType.Question:
+        return QuestionDataWidget.fromJson(data);
+      case PostType.File:
+        return FileDataWidget.fromJson(data);
+      case PostType.Poll:
+        return PollDataWidget.fromJson(data);
+      case PostType.Confession:
+        return ConfessionDataWidget.fromJson(data);
+      case PostType.Social:
+        return SocialDataWidget.fromJson(data);
+      default:
+        return null;
+    }
+  }
+
+  factory ShowPost.fromJson(Map<String, dynamic> json) {
+    return ShowPost(
+      username: json['username'],
+      folder: json['folder'],
+      title: json['title'],
+      university: json['university'],
+      votes: json['votes'],
+      tags: json['tags'].cast<String>(),
+      type: json['type'],
+      typeData: getData(json['type'], json['typeData']),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'username': username,
+      'folder': folder,
+      'title': title,
+      'university': university,
+      'votes': votes,
+      'tags': tags,
+      'type': type,
+      'typeData': typeData.toJson(),
+    };
+  }
+
 }
 
-enum PostType {
-  Question,
-  File,
-  Poll,
-  Confession,
-  Social,
+class PostType {
+  static const String Question = 'Question';
+  static const String File = 'File';
+  static const String Poll = 'Poll';
+  static const String Confession = 'Confession';
+  static const String Social = 'Social';
 }
 
 abstract class PostDataWidget {
   PostDataWidget();
+  Map<String, dynamic> toJson();
 
   Widget createWidget();
 }
 class QuestionDataWidget extends PostDataWidget {
   final String data;
-  final String image;
+  final File image;
+
   QuestionDataWidget({this.data, this.image});
+
+  factory QuestionDataWidget.fromJson(Map<String, dynamic> json) {
+    return QuestionDataWidget(
+      data: json['data'],
+      image: json['image'],
+    );
+  }
+
+  @override
+  Map<String, dynamic> toJson() {
+    return {
+      'data': data,
+      'image': image==null ? null : image.readAsStringSync()
+    };
+  }
 
   @override
   Widget createWidget() {
     return Container(
         padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         child: Text(data)
+        //TODO add image
     );
   }
 }
@@ -49,6 +111,20 @@ class FileDataWidget extends PostDataWidget {
   final String context;
 
   FileDataWidget({this.context});
+
+  factory FileDataWidget.fromJson(Map<String, dynamic> json) {
+    return FileDataWidget(
+      context: json['context'],
+    );
+  }
+
+  @override
+  Map<String, dynamic> toJson() {
+    return {
+      'context': context,
+      //TODO add file
+    };
+  }
 
   @override
   Widget createWidget() {
@@ -61,11 +137,7 @@ class FileDataWidget extends PostDataWidget {
               padding: EdgeInsets.symmetric(horizontal: 15, vertical: 0),
               child: Text(context)
           ),
-          FlatButton(
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(18.0),
-                side: BorderSide(color: Colors.red)
-            ),
+          TextButton(
             onPressed: () {
               //TODO download and open file
             },
@@ -93,6 +165,21 @@ class PollDataWidget extends PostDataWidget {
 
   PollDataWidget({this.question, this.polls, this.voted});
 
+  factory PollDataWidget.fromJson(Map<String, dynamic> json) {
+    return PollDataWidget(
+      question: json['question'],
+      polls: json['polls'],
+    );
+  }
+
+  @override
+  Map<String, dynamic> toJson() {
+    return {
+      'question': question,
+      'polls': polls,
+    };
+  }
+
   @override
   Widget createWidget() {
     return Container(
@@ -102,6 +189,7 @@ class PollDataWidget extends PostDataWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
+            padding: EdgeInsets.only(bottom: 20),
             child: Text(question),
           ),
           Container(
@@ -121,7 +209,7 @@ class PollDataWidget extends PostDataWidget {
   }
 
   Widget noVote(index) {
-    return FlatButton(
+    return TextButton(
       onPressed: () {
 
       },
@@ -153,6 +241,23 @@ class PollDataWidget extends PostDataWidget {
 }
 class ConfessionDataWidget extends PostDataWidget {
 
+  final String context;
+
+  ConfessionDataWidget({this.context});
+
+  factory ConfessionDataWidget.fromJson(Map<String, dynamic> json) {
+    return ConfessionDataWidget(
+      context: json['context'],
+    );
+  }
+
+  @override
+  Map<String, dynamic> toJson() {
+    return {
+      'context': context,
+    };
+  }
+
   @override
   Widget createWidget() {
     //TODO
@@ -160,6 +265,23 @@ class ConfessionDataWidget extends PostDataWidget {
   }
 }
 class SocialDataWidget extends PostDataWidget {
+
+  final String context;
+
+  SocialDataWidget({this.context});
+
+  factory SocialDataWidget.fromJson(Map<String, dynamic> json) {
+    return SocialDataWidget(
+      context: json['context'],
+    );
+  }
+
+  @override
+  Map<String, dynamic> toJson() {
+    return {
+      'context': context,
+    };
+  }
 
   @override
   Widget createWidget() {

@@ -1,4 +1,5 @@
 import 'package:academics/chooseFolder.dart';
+import 'package:academics/profile.dart';
 import 'package:flutter/material.dart';
 import 'mainPage.dart';
 import 'postSearch.dart';
@@ -7,7 +8,7 @@ import 'upload.dart';
 void main() {
   runApp(
     MaterialApp(
-      initialRoute: '/chooseFolder',
+      initialRoute: '/',
       routes: {
         '/' : (context) => MainPage(),
         '/post_search' : (context) => PostSearch(),

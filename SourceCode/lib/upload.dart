@@ -1,8 +1,16 @@
+
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'dart:ui' as ui;
+import 'package:image_picker/image_picker.dart';
 import 'package:textfield_tags/textfield_tags.dart';
 import 'schemes.dart';
+import 'package:http/http.dart' as http;
 
+import 'package:firebase_core/firebase_core.dart' as firebase_core;
+import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 
 class UploadPage extends StatefulWidget {
 
@@ -30,16 +38,30 @@ class _UploadPageState extends State<UploadPage> {
     if (isValid()) {
       ShowPost post = ShowPost(
         title: _titleController.text,
-        folder: 'TODO(get folder)',
+        folder: _folder,
         username: 'TODO(get current username)',
-        university: 'TODO(get university or null if not checked)',
+        university: _isUniversity ? 'TODO(get university)' : null,
         type: _postType.type,
         typeData: _postType.createDataObject(),
         tags: _tags,
       );
+      sendPost(post);
     } else {
       showErrors();
     }
+  }
+
+  void chooseFolder() async {
+    final result = await Navigator.pushNamed(context, '/chooseFolder');
+    setState(() {
+      _folder = result == null ? _folder : result;
+    });
+  }
+
+  void sendPost(ShowPost post) async {
+    final response = await http.post('http://10.0.2.2:3000/post',
+    body: post.toJson());
+    print('post uploaded with code $response.statusCode');
   }
 
   void showErrors() {
@@ -67,7 +89,7 @@ class _UploadPageState extends State<UploadPage> {
                 children: [
                   Row(
                     children: [
-                      FlatButton(
+                      TextButton(
                           onPressed: () => {
                             Navigator.pop(context)
                           },
@@ -86,7 +108,7 @@ class _UploadPageState extends State<UploadPage> {
                       controller: _titleController,
                     )
                   ),
-                  _postType.createUploadPage(),
+                  _postType.createUploadPage(setState),
                   Divider(
                     color: Colors.black,
                     height: 1,
@@ -99,17 +121,12 @@ class _UploadPageState extends State<UploadPage> {
                         Text('Folder'),
                         Container(
                           margin: EdgeInsets.fromLTRB(20, 0, 0, 0),
-                          child: FlatButton(
+                          child: TextButton(
                             onPressed: () {
-                              Navigator.pushNamed(context, '/chooseFolder');
+                              chooseFolder();
                             },
                             child: Container(
                               child: Text(_folder),
-                            ),
-                            color: Colors.black12,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(18.0),
-                              side: BorderSide(color: Colors.black),
                             ),
                           ),
                         )
@@ -126,9 +143,11 @@ class _UploadPageState extends State<UploadPage> {
                       children: [
                         Text('University'),
                         Checkbox(
-                            value: false,
+                            value: _isUniversity,
                             onChanged: (newValue) {
-                              _isUniversity = newValue;
+                              setState(() {
+                                _isUniversity = newValue;
+                              });
                             },
                         )
                       ],
@@ -142,6 +161,7 @@ class _UploadPageState extends State<UploadPage> {
                     margin: EdgeInsets.symmetric(vertical: 20),
                     height: 55,
                     child: TextFieldTags(
+                      initialTags: getAutoTags(),
                       tagsStyler: TagsStyler(
                         tagTextStyle: TextStyle(fontWeight: FontWeight.bold),
                         tagDecoration: BoxDecoration(color: Colors.blue[300], borderRadius: BorderRadius.circular(8.0), ),
@@ -165,16 +185,12 @@ class _UploadPageState extends State<UploadPage> {
                   ),
                   Container(
                     margin: EdgeInsets.symmetric(vertical: 10),
-                    child: FlatButton(
+                    child: TextButton(
                       onPressed: () {
                         postClicked();
                       },
                       child: Text(
                           'Post'
-                      ),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(18.0),
-                          side: BorderSide(color: Colors.black)
                       ),
                     ),
                   )
@@ -186,33 +202,97 @@ class _UploadPageState extends State<UploadPage> {
       ),
     );
   }
+
+  List<String> getAutoTags() {
+    // return user's default tags
+    return [];
+  }
+
 }
 
-
 abstract class UploadType {
-  final PostType type;
+  final String type;
 
   UploadType(this.type);
 
-  Widget createUploadPage();
+  Widget createUploadPage(Function setState);
   bool isValid();
   void showErrors();
   PostDataWidget createDataObject();
 }
 
 class QuestionUploadType extends UploadType {
+
+  final picker = ImagePicker();
+  Function _setState;
+  File _image;
+  var _textController = TextEditingController();
+
+
   QuestionUploadType() : super(PostType.Question);
 
+  _imgFromGallery() async {
+    PickedFile image = await picker.getImage(source: ImageSource.camera);
+    // TODO add option for gallery (make the user pick between camera and gallery)
+    _setState(() {
+      if (image != null) {
+        _image = File(image.path);
+      }
+    });
+  }
+
+  Widget pickImage() {
+    if (_image != null) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextButton(
+            onPressed: () {
+              _setState((){
+                _image = null;
+              });
+            },
+            child: Container(
+              child: Text('Remove Image'),
+            ),
+          ),
+          Image.file(_image),
+        ],
+      );
+    } else {
+      return TextButton(
+        onPressed: () {
+          _imgFromGallery();
+        },
+        child: Container(
+          child: Text('Image (optional)'),
+        ),
+      );
+    }
+  }
+
   @override
-  Widget createUploadPage() {
+  Widget createUploadPage(Function setState) {
+    _setState = setState;
+
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 0, vertical: 20),
-      child: TextField(
-        decoration: InputDecoration(
-            border: InputBorder.none,
-            contentPadding: EdgeInsets.only(left: 15, bottom: 11, top: 11, right: 15),
-            hintText: "Your text (optional)"
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextField(
+            decoration: InputDecoration(
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.only(left: 15, bottom: 11, top: 11, right: 15),
+                hintText: "Your text (optional)"
+            ),
+            controller: _textController,
+          ),
+          Container(
+            margin: EdgeInsets.symmetric(horizontal: 10),
+            child: pickImage(),
+          ),
+        ],
       ),
     );
   }
@@ -225,7 +305,8 @@ class QuestionUploadType extends UploadType {
   @override
   PostDataWidget createDataObject() {
     return QuestionDataWidget(
-        data: 'TODO(get text)'
+      data: _textController.text,
+      image: _image
     );
   }
 
@@ -236,13 +317,30 @@ class QuestionUploadType extends UploadType {
 }
 
 class FileUploadType extends UploadType {
+
+
+
   FileUploadType() : super(PostType.File);
 
+  Future pickFile() async {
+    FilePickerResult result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf']
+    );
+    if(result != null) {
+      File file = File(result.files.single.path);
+      file.readAsBytesSync();
+    } else {
+      // User canceled the picker
+    }
+  }
+
   @override
-  Widget createUploadPage() {
+  Widget createUploadPage(Function setState) {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 0, vertical: 20),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           TextField(
             decoration: InputDecoration(
@@ -252,16 +350,12 @@ class FileUploadType extends UploadType {
           ),
           Container(
             margin: EdgeInsets.symmetric(vertical: 10),
-            child: FlatButton(
+            child: TextButton(
               onPressed: () {
-
+                pickFile();
               },
               child: Text(
                 'Upload'
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(18.0),
-                side: BorderSide(color: Colors.red)
               ),
             ),
           )
@@ -289,18 +383,76 @@ class FileUploadType extends UploadType {
 }
 
 class PollUploadType extends UploadType {
+
+  static const MAX_CHOICES = 6;
+  var _textController = TextEditingController();
+  List<TextEditingController> _polls = [TextEditingController(), TextEditingController()];
+  Function _setState;
+
   PollUploadType() : super(PostType.Poll);
 
+  Map<String,int> createPolls() {
+    return {'test':5};
+  }
+
   @override
-  Widget createUploadPage() {
+  Widget createUploadPage(Function setState) {
+    _setState = setState;
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 0, vertical: 20),
-      child: TextField(
-        decoration: InputDecoration(
-            border: InputBorder.none,
-            contentPadding: EdgeInsets.only(left: 15, bottom: 11, top: 11, right: 15),
-            hintText: "Your text (optional)"
-        ),
+      child: Column(
+        children: [
+          TextField(
+            decoration: InputDecoration(
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.only(left: 15, bottom: 11, top: 11, right: 15),
+                hintText: "Your text (optional)"
+            ),
+            controller: _textController,
+          ),
+          Column(
+            children: List<Widget>.generate(_polls.length, (index) {
+              return index >= 2 ? Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _polls[index],
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      _setState(() {
+                        _polls.removeAt(index);
+                      });
+                    },
+                    child: Icon(Icons.close),
+                  )
+                ],
+              ) :
+              TextField(
+                controller: _polls[index],
+              );
+            }),
+          ),
+          TextButton(
+            onPressed: () {
+              if (_polls.length < MAX_CHOICES) {
+                _setState(() {
+                  _polls.add(TextEditingController());
+                });
+              }
+            },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                    'Add Choice'
+                ),
+                Icon(Icons.add)
+              ],
+            ),
+          )
+        ],
       ),
     );
   }
@@ -313,8 +465,10 @@ class PollUploadType extends UploadType {
 
   @override
   PostDataWidget createDataObject() {
-    // TODO: implement createDataObject
-    throw UnimplementedError();
+    return PollDataWidget(
+      question: _textController.text,
+      polls: createPolls(),
+    );
   }
 
   @override
@@ -327,7 +481,7 @@ class ConfessionUploadType extends UploadType {
   ConfessionUploadType() : super(PostType.Confession);
 
   @override
-  Widget createUploadPage() {
+  Widget createUploadPage(Function setState) {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 0, vertical: 20),
       child: TextField(
@@ -362,7 +516,7 @@ class SocialUploadType extends UploadType {
   SocialUploadType() : super(PostType.Social);
 
   @override
-  Widget createUploadPage() {
+  Widget createUploadPage(Function setState) {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 0, vertical: 20),
       child: TextField(
@@ -395,6 +549,8 @@ class SocialUploadType extends UploadType {
 
 class ChooseUpload{
 
+  static List<String> options = ['Question', 'File', 'Poll', 'Confession', 'Social'];
+
   static OverlayEntry getUploadOverlay(context) {
     OverlayEntry entry;
     entry = OverlayEntry(
@@ -408,110 +564,29 @@ class ChooseUpload{
             padding: EdgeInsets.symmetric(horizontal: 0, vertical: 30),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
+              children: List<Widget>.generate(options.length, (index) {
+                return SizedBox(
+                  width: MediaQuery.of(context).size.width/5,
+                  height: MediaQuery.of(context).size.width/5,
+                  child: TextButton(
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/upload_${options[index].toLowerCase()}');
+                      entry.remove();
+                    },
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        Icon(Icons.question_answer, size: 40,color: Colors.black,),
+                        Text(options[index],style: TextStyle(
+                          fontSize: 10,
+                          color: Colors.black,
+                        ),),
+                      ],
+                    ),
+                  ),
+                );
+              }),
 
-                SizedBox(
-                  width: MediaQuery.of(context).size.width/5,
-                  height: MediaQuery.of(context).size.width/5,
-                  child: FlatButton(
-                    onPressed: () {
-                      Navigator.pushNamed(context, '/upload_question');
-                      entry.remove();
-                      },
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        Icon(Icons.question_answer, size: 40,),
-                        Text('Question',
-                          style: TextStyle(
-                          fontSize: 10,
-                          color: Colors.black,
-                        ),),
-                      ],
-                    ),
-                  ),
-                ),
-                SizedBox(
-                  width: MediaQuery.of(context).size.width/5,
-                  height: MediaQuery.of(context).size.width/5,
-                  child: FlatButton(
-                    onPressed: () {
-                      Navigator.pushNamed(context, '/upload_file');
-                      entry.remove();
-                    },
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        Icon(Icons.question_answer, size: 40,),
-                        Text('File',style: TextStyle(
-                          fontSize: 10,
-                          color: Colors.black,
-                        ),),
-                      ],
-                    ),
-                  ),
-                ),
-                SizedBox(
-                  width: MediaQuery.of(context).size.width/5,
-                  height: MediaQuery.of(context).size.width/5,
-                  child: FlatButton(
-                    onPressed: () {
-                      Navigator.pushNamed(context, '/upload_poll');
-                      entry.remove();
-                    },
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        Icon(Icons.question_answer, size: 40,),
-                        Text('Poll',style: TextStyle(
-                          fontSize: 10,
-                          color: Colors.black,
-                        ),),
-                      ],
-                    ),
-                  ),
-                ),
-                SizedBox(
-                  width: MediaQuery.of(context).size.width/5,
-                  height: MediaQuery.of(context).size.width/5,
-                  child: FlatButton(
-                    onPressed: () {
-                      Navigator.pushNamed(context, '/upload_confession');
-                      entry.remove();
-                    },
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        Icon(Icons.question_answer, size: 40,),
-                        Text('Confession',style: TextStyle(
-                          fontSize: 10,
-                          color: Colors.black,
-                        ),),
-                      ],
-                    ),
-                  ),
-                ),
-                SizedBox(
-                  width: MediaQuery.of(context).size.width/5,
-                  height: MediaQuery.of(context).size.width/5,
-                  child: FlatButton(
-                    onPressed: () {
-                      Navigator.pushNamed(context, '/upload_social');
-                      entry.remove();
-                    },
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        Icon(Icons.question_answer, size: 40,),
-                        Text('Social',style: TextStyle(
-                          fontSize: 10,
-                          color: Colors.black,
-                        ),),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
             ),
           ),
         ),
