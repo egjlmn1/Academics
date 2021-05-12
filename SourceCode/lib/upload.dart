@@ -2,6 +2,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -35,7 +36,9 @@ class _UploadPageState extends State<UploadPage> {
 
 
   void postClicked() {
-    if (isValid()) {
+    var valid = isValid();
+    print(valid);
+    if (valid) {
       ShowPost post = ShowPost(
         title: _titleController.text,
         folder: _folder,
@@ -59,9 +62,10 @@ class _UploadPageState extends State<UploadPage> {
   }
 
   void sendPost(ShowPost post) async {
-    final response = await http.post('http://10.0.2.2:3000/post',
-    body: post.toJson());
-    print('post uploaded with code $response.statusCode');
+    CollectionReference posts = FirebaseFirestore.instance.collection('posts');
+    posts.add(post.toJson()).then((value) => print("Post Uploaded $value"))
+        .catchError((error) => print("Failed to add user: $error"));
+    print('post uploaded?');
   }
 
   void showErrors() {
@@ -71,7 +75,7 @@ class _UploadPageState extends State<UploadPage> {
 
   bool isValid() {
     return
-      _titleController.text.isEmpty
+      !_titleController.text.isEmpty
           && _postType.isValid();
   }
 
@@ -306,7 +310,6 @@ class QuestionUploadType extends UploadType {
   PostDataWidget createDataObject() {
     return QuestionDataWidget(
       data: _textController.text,
-      image: _image
     );
   }
 

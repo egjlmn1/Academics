@@ -9,14 +9,15 @@ class ShowPost {
   final String folder;
   final String title;
   final String university;
-  final int votes;
+  final int upVotes;
+  final int downVotes;
   final List<String> tags;
 
   final String type;
   final PostDataWidget typeData;
 
 
-  ShowPost({this.tags, this.votes, this.username, this.folder, this.title, this.university, this.type, this.typeData});
+  ShowPost({this.tags, this.upVotes, this.downVotes, this.username, this.folder, this.title, this.university, this.type, this.typeData});
 
   static PostDataWidget getData(String type, Map<String, dynamic> data) {
     switch(type) {
@@ -31,17 +32,20 @@ class ShowPost {
       case PostType.Social:
         return SocialDataWidget.fromJson(data);
       default:
+        print('null');
         return null;
     }
   }
 
   factory ShowPost.fromJson(Map<String, dynamic> json) {
+    print(json);
     return ShowPost(
       username: json['username'],
       folder: json['folder'],
       title: json['title'],
       university: json['university'],
-      votes: json['votes'],
+      upVotes: json['up_votes'],
+      downVotes: json['down_votes'],
       tags: json['tags'].cast<String>(),
       type: json['type'],
       typeData: getData(json['type'], json['typeData']),
@@ -54,7 +58,8 @@ class ShowPost {
       'folder': folder,
       'title': title,
       'university': university,
-      'votes': votes,
+      'up_votes': upVotes,
+      'down_votes': downVotes,
       'tags': tags,
       'type': type,
       'typeData': typeData.toJson(),
@@ -79,14 +84,15 @@ abstract class PostDataWidget {
 }
 class QuestionDataWidget extends PostDataWidget {
   final String data;
-  final File image;
+  final String image_id;
+  File image;
 
-  QuestionDataWidget({this.data, this.image});
+  QuestionDataWidget({this.data, this.image_id});
 
   factory QuestionDataWidget.fromJson(Map<String, dynamic> json) {
     return QuestionDataWidget(
       data: json['data'],
-      image: json['image'],
+      image_id: json['image'],
     );
   }
 

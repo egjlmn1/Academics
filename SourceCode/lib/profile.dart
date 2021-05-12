@@ -12,7 +12,6 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
 
   // Your posts section
-  Future<List<ShowPost>> futurePosts;
 
   // Following section
   List<Folder> favoriteFolders = [
@@ -25,7 +24,6 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void initState() {
     super.initState();
-    futurePosts = fetchPosts();
   }
 
 
@@ -114,7 +112,7 @@ class _ProfilePageState extends State<ProfilePage> {
     if (_selectedPage == 0) {
        // your posts
       return Expanded(
-        child: createPosts(futurePosts),
+        child: fetchPosts('profile_posts'),
       );
     } else if (_selectedPage == 1) {
       // following

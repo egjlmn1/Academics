@@ -12,7 +12,7 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
-  Page _selectedPage = Page.inbox;
+  Page _selectedPage = Page.home;
   List<StatefulWidget> pages = [HomePage(), FoldersPage(), null, InboxPage(), ProfilePage()];
   OverlayEntry _uploadOverlay;
 

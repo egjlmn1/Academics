@@ -1,11 +1,14 @@
 import 'package:academics/chooseFolder.dart';
 import 'package:academics/profile.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'mainPage.dart';
 import 'postSearch.dart';
 import 'upload.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(
     MaterialApp(
       initialRoute: '/',
@@ -24,6 +27,7 @@ void main() {
     )
   );
 }
+
 
 
 

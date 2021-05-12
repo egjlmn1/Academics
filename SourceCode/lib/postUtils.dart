@@ -8,49 +8,34 @@ import 'package:http/http.dart' as http;
 import 'package:academics/schemes.dart';
 import 'package:flutter/cupertino.dart';
 
-Future<List<ShowPost>> fetchPosts() async {
-  print('getting response');
-  try {
-    final response = await http.get('http://10.0.2.2:3000/posts/home_posts')
-        .timeout(const Duration(seconds: 10));
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-    print('got response');
-    print(response);
-    print(response.body);
-    if (response.statusCode == 200) {
-      // If the server did return a 200 OK response,
-      // then parse the JSON.
-      List<ShowPost> posts = [];
-      for (Map data in jsonDecode(response.body)) {
-        posts.add(ShowPost.fromJson(data));
-      }
-      return posts;
-    } else {
-      // If the server did not return a 200 OK response,
-      // then throw an exception.
-      print(response.statusCode);
-      throw Exception('Failed to load posts');
+
+Widget createPosts(QuerySnapshot data) {
+    List<ShowPost> posts = [];
+    for (QueryDocumentSnapshot doc in data.docs) {
+      Map m = doc.data();
+      print(m);
+      posts.add(ShowPost.fromJson(m));
     }
-  } on TimeoutException {
-    throw Exception('Timeout');
-    //throw Exception('Academics is currently under maintenance');
-  }
+    return ListView.builder(
+        itemCount: posts.length,
+        physics: ScrollPhysics(),
+        itemBuilder: (BuildContext context, int index) {
+          return Container(
+            child: createPost(posts[index]),
+          );
+        }
+    );
 }
 
-Widget createPosts(futurePosts) {
-  return FutureBuilder<List<ShowPost>>(
-    future: futurePosts,
+Widget fetchPosts(String posts_name) {
+  CollectionReference posts = FirebaseFirestore.instance.collection('posts');
+  return FutureBuilder<QuerySnapshot>(
+    future: posts.get(),
     builder: (context, snapshot) {
       if (snapshot.hasData) {
-        return ListView.builder(
-            itemCount: snapshot.data.length,
-            physics: ScrollPhysics(),
-            itemBuilder: (BuildContext context, int index) {
-              return Container(
-                child: createPost(snapshot.data[index]),
-              );
-            }
-        );
+        return createPosts(snapshot.data);
       } else if (snapshot.hasError) {
         return Text(snapshot.error.toString().substring(11)); //removes the 'Exception: ' prefix
       }
@@ -81,7 +66,7 @@ Widget createPost(ShowPost post) {
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 Icon(Icons.arrow_upward),
-                Text(post.votes.toString()),
+                Text((post.upVotes-post.downVotes).toString()),
                 Icon(Icons.share),
               ],
             ),

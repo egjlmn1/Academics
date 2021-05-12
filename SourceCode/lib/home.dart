@@ -15,62 +15,9 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
 
-  Future<List<ShowPost>> futurePosts;
-
-  List<ShowPost> posts = [
-    ShowPost(
-      username: 'Yoav Naftali',
-      folder: 'Exact Science/Computer Science',
-      title: 'An interesting title',
-      type: PostType.File,
-      university: 'Bar Ilan',
-      typeData: FileDataWidget(
-          context: 'My very long and annoying question'
-      ),
-      votes: 5,
-    ),
-    ShowPost(
-      username: 'Yoav Naftali',
-      folder: 'Exact Science/Computer Science',
-      title: 'An interesting title',
-      type: PostType.Question,
-      university: 'Bar Ilan',
-      typeData: QuestionDataWidget(
-          data: 'My very very very very very very very very very very very very very very very very long and annoying question'
-      ),
-      votes: 5,
-    ),
-    ShowPost(
-      username: 'Yoav Naftali',
-      folder: 'Exact Science/Computer Science',
-      title: 'An interesting title',
-      type: PostType.Poll,
-      university: 'Bar Ilan',
-      typeData: PollDataWidget(
-        question: 'My very long and annoying question',
-        polls: {'my very long option number unu in spanish and one in english but after all one in english in ich in japanese and ich in english makes you want to scratch': 5, 'b': 5, 'c': 5},
-        voted: false,
-      ),
-      votes: 5,
-    ),
-    ShowPost(
-      username: 'Yoav Naftali',
-      folder: 'Exact Science/Computer Science',
-      title: 'An interesting title',
-      type: PostType.Poll,
-      typeData: PollDataWidget(
-        question: 'My very long and annoying question',
-        polls: {'my very long option number unu in spanish and one in english but after all one in english in ich in japanese and ich in english makes you want to scratch': 8, 'b': 15, 'c': 12},
-        voted: true,
-      ),
-      votes: 5,
-    ),
-  ];
-
   @override
   void initState() {
     super.initState();
-    futurePosts = fetchPosts();
   }
 
   @override
@@ -114,7 +61,7 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
           Expanded(
-            child: createPosts(futurePosts),
+            child: fetchPosts('home_posts'),
           ),
         ],
       ),

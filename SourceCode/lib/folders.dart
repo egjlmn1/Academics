@@ -1,5 +1,9 @@
+import 'package:academics/postUtils.dart';
+import 'package:academics/schemes.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+
+import 'folderUtils.dart';
 
 class FoldersPage extends StatefulWidget {
   @override
@@ -8,10 +12,13 @@ class FoldersPage extends StatefulWidget {
 
 class _FoldersPageState extends State<FoldersPage> {
 
-  List<String> folders = [
-    "very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very long text",
-    "2",
-    "3"];
+  List<Folder> shownFolders = [
+    Folder(path: '/Exact Science/Computer Science', type: FolderType.folder),
+  ];
+  List<ShowPost> posts = [
+
+  ];
+  var _viewType = 0; // 0 for list view, 1 for drive like view
 
   @override
   Widget build(BuildContext context) {
@@ -33,14 +40,7 @@ class _FoldersPageState extends State<FoldersPage> {
               ],
             ),
             Expanded(
-              child: ListView.builder(
-                  itemCount: folders.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    return Container(
-                      child: createFolder(index),
-                    );
-                  }
-              ),
+              child: createListView(),
             ),
           ],
         ),
@@ -48,7 +48,18 @@ class _FoldersPageState extends State<FoldersPage> {
     );
   }
 
-  Widget createFolder(int index) {
+  Widget createListView() {
+    return ListView.builder(
+        itemCount: shownFolders.length,
+        itemBuilder: (BuildContext context, int index) {
+          return Container(
+            child: (index >= shownFolders.length) ? createFolderView(index) : createPostView(index-shownFolders.length),
+          );
+        }
+    );
+  }
+
+  Widget createFolderView(int index) {
     return Container(
       color: Colors.white,
       margin: EdgeInsets.symmetric(horizontal: 0, vertical: 5),
@@ -57,16 +68,20 @@ class _FoldersPageState extends State<FoldersPage> {
         children: [
           Expanded(
               child: Text(
-                folders[index],
+                shownFolders[index].name(),
                 style: TextStyle(fontSize: 20),
               )
           ),
           Icon(
-            Icons.folder,
+            shownFolders[index].icon(),
             size: 30,
           ),
         ],
       ),
     );
+  }
+
+  Widget createPostView(int index) {
+    return createPost(posts[index]);
   }
 }
