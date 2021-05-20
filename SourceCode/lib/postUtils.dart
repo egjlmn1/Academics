@@ -3,7 +3,6 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 
 import 'package:academics/schemes.dart';
 import 'package:flutter/cupertino.dart';
@@ -15,7 +14,6 @@ Widget createPosts(QuerySnapshot data) {
     List<ShowPost> posts = [];
     for (QueryDocumentSnapshot doc in data.docs) {
       Map m = doc.data();
-      print(m);
       posts.add(ShowPost.fromJson(m));
     }
     return ListView.builder(

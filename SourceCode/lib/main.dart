@@ -1,10 +1,11 @@
 import 'package:academics/chooseFolder.dart';
 import 'package:academics/profile.dart';
+import 'package:academics/upload/uploadType.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'mainPage.dart';
 import 'postSearch.dart';
-import 'upload.dart';
+import 'upload/upload.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,7 +21,6 @@ void main() async {
         '/upload_poll' : (context) => UploadPage(PollUploadType()),
         '/upload_confession' : (context) => UploadPage(ConfessionUploadType()),
         '/upload_social' : (context) => UploadPage(SocialUploadType()),
-        '/chooseFolder' : (context) => ChooseFolder(),
 
       },
       debugShowCheckedModeBanner: false,

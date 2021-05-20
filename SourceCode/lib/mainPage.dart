@@ -1,7 +1,8 @@
 import 'package:academics/folders.dart';
 import 'package:academics/home.dart';
 import 'package:academics/profile.dart';
-import 'package:academics/upload.dart';
+import 'package:academics/testing.dart';
+import 'package:academics/upload/upload.dart';
 import 'package:academics/inbox.dart';
 import 'package:flutter/material.dart';
 
@@ -13,7 +14,7 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   Page _selectedPage = Page.home;
-  List<StatefulWidget> pages = [HomePage(), FoldersPage(), null, InboxPage(), ProfilePage()];
+  List<Widget> pages = [HomePage(), FoldersPage(), null, InboxPage(), ProfilePage()];
   OverlayEntry _uploadOverlay;
 
 

@@ -23,7 +23,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  http: ^0.12.2
   textfield_tags: ^1.1.0+1
   image_picker: ^0.6.6+5
   file_picker: ^2.1.1
@@ -31,6 +30,9 @@ dependencies:
   firebase_storage: ^7.0.0
   firebase_analytics: ^5.0.2
   cloud_firestore: ^0.16.0
+  shared_preferences: ^2.0.5
+
+
 
 
 

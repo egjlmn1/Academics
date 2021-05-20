@@ -14,7 +14,7 @@ class ShowPost {
   final List<String> tags;
 
   final String type;
-  final PostDataWidget typeData;
+  PostDataWidget typeData;
 
 
   ShowPost({this.tags, this.upVotes, this.downVotes, this.username, this.folder, this.title, this.university, this.type, this.typeData});
@@ -38,7 +38,6 @@ class ShowPost {
   }
 
   factory ShowPost.fromJson(Map<String, dynamic> json) {
-    print(json);
     return ShowPost(
       username: json['username'],
       folder: json['folder'],
@@ -65,7 +64,6 @@ class ShowPost {
       'typeData': typeData.toJson(),
     };
   }
-
 }
 
 class PostType {
@@ -85,7 +83,6 @@ abstract class PostDataWidget {
 class QuestionDataWidget extends PostDataWidget {
   final String data;
   final String image_id;
-  File image;
 
   QuestionDataWidget({this.data, this.image_id});
 
@@ -100,7 +97,7 @@ class QuestionDataWidget extends PostDataWidget {
   Map<String, dynamic> toJson() {
     return {
       'data': data,
-      'image': image==null ? null : image.readAsStringSync()
+      'image': image_id
     };
   }
 
@@ -108,13 +105,37 @@ class QuestionDataWidget extends PostDataWidget {
   Widget createWidget() {
     return Container(
         padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        child: Text(data)
+        child: Column(
+          children: [
+            Text(data),
+            if (image_id != null) Image.network(
+              image_id,
+              loadingBuilder: (BuildContext context, Widget child,
+                  ImageChunkEvent loadingProgress) {
+                if (loadingProgress == null) {
+                  return child;
+                }
+                return Center(
+                  child: CircularProgressIndicator(
+                    value: loadingProgress.expectedTotalBytes != null
+                        ? loadingProgress.cumulativeBytesLoaded /
+                        loadingProgress.expectedTotalBytes
+                        : null,
+                  ),
+                );
+              },
+
+            ),
+          ],
+        )
         //TODO add image
     );
   }
+
 }
 class FileDataWidget extends PostDataWidget {
   final String context;
+  File fileData;
 
   FileDataWidget({this.context});
 

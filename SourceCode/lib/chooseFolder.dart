@@ -2,9 +2,14 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ChooseFolder extends StatefulWidget {
+
+  String folder;
+
+  ChooseFolder({this.folder});
+
   @override
   _ChooseFolderState createState() => _ChooseFolderState();
 }
@@ -18,7 +23,13 @@ class _ChooseFolderState extends State<ChooseFolder> {
   final folderTextFieldController = TextEditingController();
 
   _ChooseFolderState() {
+    pickFolder(widget.folder);
     showFolders = getFolders('');
+  }
+
+  Future<List<String>> getPreviousFolders() async {
+    final prefs = await SharedPreferences.getInstance();
+    previousFolders = prefs.getStringList('previousFolders') ?? [];
   }
 
   void pickFolder(String folder) {
@@ -37,26 +48,7 @@ class _ChooseFolderState extends State<ChooseFolder> {
     if (prefixPath.isEmpty && (selectedFolders.length == 1)) {
       return previousFolders;
     }
-    return ['getting', 'folders', 'from', 'server', 'with', 'prefix', prefixPath.toLowerCase(), 'folder/folder2'];
-    try {
-      //server send list of string in format 'single_folder' or 'folder/sub_folder...'
-      // send to the server the currently (selected folders + prefixPath)
-      final response = await http.get('http://10.0.2.2:3000/chooseFolder')
-          .timeout(const Duration(seconds: 10));
-      if (response.statusCode == 200) {
-        List<String> folders = [];
-        for (Map data in jsonDecode(response.body)) {
-          folders.add(data.toString());
-        }
-        return folders;
-      } else {
-        print(response.statusCode);
-        throw Exception('Failed to load folders');
-      }
-    } on TimeoutException {
-      throw Exception('Timeout');
-      //throw Exception('Academics is currently under maintenance');
-    }
+    return ['getting', 'folders', 'from', 'server', 'with', 'prefix', getFolder() + '/' + prefixPath.toLowerCase(), 'folder/folder2'];
   }
 
   @override
@@ -99,7 +91,7 @@ class _ChooseFolderState extends State<ChooseFolder> {
             ),
             TextButton(
               onPressed: (() {
-                Navigator.pop(context, getFolder());
+                selectFolder();
               }),
               child: Text('select')
             ),
@@ -148,5 +140,18 @@ class _ChooseFolderState extends State<ChooseFolder> {
         ),
       ),
     );
+  }
+
+  void selectFolder() {
+    var folder = getFolder();
+    previousFolders.insert(0, folder);
+    savePreviousFolders();
+    Navigator.pop(context, folder);
+  }
+
+  void savePreviousFolders() async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setStringList('previousFolders', previousFolders);
+
   }
 }
