@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "545390422653-3g4e84c8p494puuloti9ata24eonsb95.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.lindana.academics",
+            "certificate_hash": "e9cbffe3eb880814ec5802ed985284178df11c32"
+          }
+        },
+        {
           "client_id": "545390422653-2572987php74tu93vm4ao8blqp44le16.apps.googleusercontent.com",
           "client_type": 3
         }

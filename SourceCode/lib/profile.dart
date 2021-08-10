@@ -1,8 +1,9 @@
-import 'package:academics/postUtils.dart';
-import 'package:academics/schemes.dart';
+import 'package:academics/posts/postUtils.dart';
+import 'package:academics/posts/schemes.dart';
 import 'package:flutter/material.dart';
 
-import 'folderUtils.dart';
+import 'authenticate/authUtils.dart';
+import 'folders/folders.dart';
 
 class ProfilePage extends StatefulWidget {
   @override
@@ -10,7 +11,6 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-
   // Your posts section
 
   // Following section
@@ -26,7 +26,6 @@ class _ProfilePageState extends State<ProfilePage> {
     super.initState();
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -37,10 +36,27 @@ class _ProfilePageState extends State<ProfilePage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.person,size: 100,),
-                Text('Your Name',style: TextStyle(
-                  fontSize: 30,
-                ),)
+                Icon(
+                  Icons.person,
+                  size: 100,
+                ),
+                Column(
+                  children: [
+                    Text(
+                      'Your Name',
+                      style: TextStyle(
+                        fontSize: 30,
+                      ),
+                    ),
+                    TextButton(
+                        onPressed: () async {
+                          await Authentication.signOut(context: context);
+                          Navigator.of(context).pushReplacementNamed('/auth');
+                        },
+                        child: Text('Logout')
+                    )
+                  ],
+                )
               ],
             ),
           ),
@@ -100,9 +116,7 @@ class _ProfilePageState extends State<ProfilePage> {
         Text('Your profile is 20% done'),
         TextButton(
           child: Text('continue'),
-          onPressed: () {
-
-          },
+          onPressed: () {},
         )
       ],
     );
@@ -110,25 +124,23 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget createPage() {
     if (_selectedPage == 0) {
-       // your posts
+      // your posts
       return Expanded(
-        child: fetchPosts('profile_posts'),
+        child: createPostPage('profile_posts', context),
       );
     } else if (_selectedPage == 1) {
       // following
       return Expanded(
           child: ListView.builder(
-          itemCount: favoriteFolders.length,
-          itemBuilder: (BuildContext context, int index) {
-            return Row(
-              children: [
-                Icon(favoriteFolders[index].icon()),
-                Text(favoriteFolders[index].name()),
-              ],
-            );
-            }
-          )
-      );
+              itemCount: favoriteFolders.length,
+              itemBuilder: (BuildContext context, int index) {
+                return Row(
+                  children: [
+                    Icon(favoriteFolders[index].icon()),
+                    Text(favoriteFolders[index].name()),
+                  ],
+                );
+              }));
     } else {
       // information
       return Column(
@@ -141,5 +153,4 @@ class _ProfilePageState extends State<ProfilePage> {
       );
     }
   }
-
 }

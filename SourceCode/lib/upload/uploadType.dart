@@ -1,7 +1,7 @@
 
 import 'dart:io';
 
-import 'package:academics/schemes.dart';
+import 'package:academics/posts/schemes.dart';
 import 'package:academics/upload/uploadWidget.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -101,8 +101,8 @@ class PollUploadType extends UploadType {
 
   @override
   bool isValid() {
-    // TODO: implement isValid
-    throw UnimplementedError();
+    List<TextEditingController> data = _widgets[1].data();
+    return (data[0].text.isNotEmpty) && (data[1].text.isNotEmpty);
   }
 
   @override

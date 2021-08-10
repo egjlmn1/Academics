@@ -3,8 +3,9 @@ import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-class ShowPost {
+class Post {
   // posts received from server and shown on screen
+  final String id;
   final String username;
   final String folder;
   final String title;
@@ -16,11 +17,20 @@ class ShowPost {
   final String type;
   PostDataWidget typeData;
 
-
-  ShowPost({this.tags, this.upVotes, this.downVotes, this.username, this.folder, this.title, this.university, this.type, this.typeData});
+  Post(
+      {this.id,
+      this.tags,
+      this.upVotes,
+      this.downVotes,
+      this.username,
+      this.folder,
+      this.title,
+      this.university,
+      this.type,
+      this.typeData});
 
   static PostDataWidget getData(String type, Map<String, dynamic> data) {
-    switch(type) {
+    switch (type) {
       case PostType.Question:
         return QuestionDataWidget.fromJson(data);
       case PostType.File:
@@ -37,8 +47,9 @@ class ShowPost {
     }
   }
 
-  factory ShowPost.fromJson(Map<String, dynamic> json) {
-    return ShowPost(
+  factory Post.fromJson(Map<String, dynamic> json) {
+    return Post(
+      id: json['id'],
       username: json['username'],
       folder: json['folder'],
       title: json['title'],
@@ -76,10 +87,12 @@ class PostType {
 
 abstract class PostDataWidget {
   PostDataWidget();
+
   Map<String, dynamic> toJson();
 
   Widget createWidget();
 }
+
 class QuestionDataWidget extends PostDataWidget {
   final String data;
   final String image_id;
@@ -95,10 +108,7 @@ class QuestionDataWidget extends PostDataWidget {
 
   @override
   Map<String, dynamic> toJson() {
-    return {
-      'data': data,
-      'image': image_id
-    };
+    return {'data': data, 'image': image_id};
   }
 
   @override
@@ -108,31 +118,31 @@ class QuestionDataWidget extends PostDataWidget {
         child: Column(
           children: [
             Text(data),
-            if (image_id != null) Image.network(
-              image_id,
-              loadingBuilder: (BuildContext context, Widget child,
-                  ImageChunkEvent loadingProgress) {
-                if (loadingProgress == null) {
-                  return child;
-                }
-                return Center(
-                  child: CircularProgressIndicator(
-                    value: loadingProgress.expectedTotalBytes != null
-                        ? loadingProgress.cumulativeBytesLoaded /
-                        loadingProgress.expectedTotalBytes
-                        : null,
-                  ),
-                );
-              },
-
-            ),
+            if (image_id != null)
+              Image.network(
+                image_id,
+                loadingBuilder: (BuildContext context, Widget child,
+                    ImageChunkEvent loadingProgress) {
+                  if (loadingProgress == null) {
+                    return child;
+                  }
+                  return Center(
+                    child: CircularProgressIndicator(
+                      value: loadingProgress.expectedTotalBytes != null
+                          ? loadingProgress.cumulativeBytesLoaded /
+                              loadingProgress.expectedTotalBytes
+                          : null,
+                    ),
+                  );
+                },
+              ),
           ],
         )
         //TODO add image
-    );
+        );
   }
-
 }
+
 class FileDataWidget extends PostDataWidget {
   final String context;
   File fileData;
@@ -162,8 +172,7 @@ class FileDataWidget extends PostDataWidget {
         children: [
           Container(
               padding: EdgeInsets.symmetric(horizontal: 15, vertical: 0),
-              child: Text(context)
-          ),
+              child: Text(context)),
           TextButton(
             onPressed: () {
               //TODO download and open file
@@ -172,23 +181,21 @@ class FileDataWidget extends PostDataWidget {
             child: Container(
               padding: EdgeInsets.symmetric(horizontal: 15, vertical: 8),
               child: Text(
-                'File',style: TextStyle(
-                fontSize: 15
-              ),
+                'File',
+                style: TextStyle(fontSize: 15),
               ),
             ),
           ),
-      ],
+        ],
       ),
     );
   }
 }
+
 class PollDataWidget extends PostDataWidget {
-
   final String question;
-  final Map<String,int> polls;
+  final Map<String, int> polls;
   bool voted;
-
 
   PollDataWidget({this.question, this.polls, this.voted});
 
@@ -237,13 +244,13 @@ class PollDataWidget extends PostDataWidget {
 
   Widget noVote(index) {
     return TextButton(
-      onPressed: () {
-
-      },
+      onPressed: () {},
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          Container(padding: EdgeInsets.fromLTRB(0,5,5,5),child: Icon(Icons.circle)),
+          Container(
+              padding: EdgeInsets.fromLTRB(0, 5, 5, 5),
+              child: Icon(Icons.circle)),
           Expanded(child: Text(polls.keys.toList()[index]))
         ],
       ),
@@ -255,7 +262,9 @@ class PollDataWidget extends PostDataWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          Container(padding: EdgeInsets.fromLTRB(0,5,5,5),child: Text(evaluteAt(index).toString() + '%')),
+          Container(
+              padding: EdgeInsets.fromLTRB(0, 5, 5, 5),
+              child: Text(evaluteAt(index).toString() + '%')),
           Expanded(child: Text(polls.keys.toList()[index]))
         ],
       ),
@@ -263,11 +272,13 @@ class PollDataWidget extends PostDataWidget {
   }
 
   int evaluteAt(index) {
-    return 100 * polls.values.toList()[index] ~/ polls.values.toList().fold(0, (a, b) => a + b);
+    return 100 *
+        polls.values.toList()[index] ~/
+        polls.values.toList().fold(0, (a, b) => a + b);
   }
 }
-class ConfessionDataWidget extends PostDataWidget {
 
+class ConfessionDataWidget extends PostDataWidget {
   final String context;
 
   ConfessionDataWidget({this.context});
@@ -291,8 +302,8 @@ class ConfessionDataWidget extends PostDataWidget {
     return Text('test');
   }
 }
-class SocialDataWidget extends PostDataWidget {
 
+class SocialDataWidget extends PostDataWidget {
   final String context;
 
   SocialDataWidget({this.context});

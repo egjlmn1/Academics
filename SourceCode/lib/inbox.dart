@@ -1,10 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:academics/schemes.dart';
+import 'package:academics/posts/schemes.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-
 
 class Message {
   String title;
@@ -13,18 +12,16 @@ class Message {
   Message({this.title, this.msg});
 
   factory Message.fromJson(Map<String, dynamic> json) {
-    return Message(
-      title: json['title'],
-      msg: json['msg']
-    );
-  }}
+    return Message(title: json['title'], msg: json['msg']);
+  }
+}
 
 Future<List<Message>> fetchMessages() async {
-
   return [Message(title: 'test title', msg: 'test msg')];
 
   try {
-    final response = await http.get('http://10.0.2.2:3000/posts/home_posts')
+    final response = await http
+        .get('http://10.0.2.2:3000/posts/home_posts')
         .timeout(const Duration(seconds: 10));
 
     if (response.statusCode == 200) {
@@ -53,8 +50,6 @@ class InboxPage extends StatefulWidget {
 }
 
 class _InboxPageState extends State<InboxPage> {
-
-
   Future<List<Message>> futureMessages;
   var _selectedPage = 0;
 
@@ -68,18 +63,18 @@ class _InboxPageState extends State<InboxPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Divider(color: Colors.black),
+        Divider(),
         Container(
             margin: EdgeInsets.symmetric(horizontal: 10),
-            child: Text(msg.title, style: TextStyle(
-              fontWeight: FontWeight.bold,
-            ),)
-        ),
+            child: Text(
+              msg.title,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+              ),
+            )),
         Container(
-            margin: EdgeInsets.symmetric(horizontal: 10),
-            child: Text(msg.msg)
-        ),
-        Divider(color: Colors.black),
+            margin: EdgeInsets.symmetric(horizontal: 10), child: Text(msg.msg)),
+        Divider(),
       ],
     );
   }
@@ -98,11 +93,11 @@ class _InboxPageState extends State<InboxPage> {
                   return Container(
                     child: createMessage(snapshot.data[index]),
                   );
-                }
-            );
+                });
           } else if (snapshot.hasError) {
-            return Text(snapshot.error.toString().substring(
-                11)); //removes the 'Exception: ' prefix
+            return Text(snapshot.error
+                .toString()
+                .substring(11)); //removes the 'Exception: ' prefix
           }
           return Container();
         },
@@ -113,7 +108,7 @@ class _InboxPageState extends State<InboxPage> {
     }
   }
 
-    @override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Column(
@@ -124,9 +119,10 @@ class _InboxPageState extends State<InboxPage> {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 TextButton(
-                  child: Text('Notifications', style: TextStyle(
-                    fontSize: 20
-                  ),),
+                  child: Text(
+                    'Notifications',
+                    style: TextStyle(fontSize: 20),
+                  ),
                   onPressed: () {
                     if (_selectedPage == 0) {
                       return;
@@ -137,9 +133,10 @@ class _InboxPageState extends State<InboxPage> {
                   },
                 ),
                 TextButton(
-                  child: Text('Chats', style: TextStyle(
-                      fontSize: 20
-                  ),),
+                  child: Text(
+                    'Chats',
+                    style: TextStyle(fontSize: 20),
+                  ),
                   onPressed: () {
                     if (_selectedPage == 1) {
                       return;
@@ -152,9 +149,7 @@ class _InboxPageState extends State<InboxPage> {
               ],
             ),
           ),
-          Expanded(
-            child: createPage()
-          )
+          Expanded(child: createPage())
         ],
       ),
     );

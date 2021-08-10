@@ -1,17 +1,14 @@
-
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class Folder {
-
   String _name;
   String path;
   FolderType type;
 
-  Folder({this.path, this.type}) {
+  Folder({this.path, this.type=FolderType.folder}) {
     var splitted = this.path.split('/');
-    _name = splitted[splitted.length-1];
+    _name = splitted[splitted.length - 1];
   }
 
   IconData icon() {
@@ -25,9 +22,19 @@ class Folder {
   String name() {
     return _name;
   }
+
+  Widget build() {
+    return Row(
+        children: [
+          Icon(icon()),
+          Text(name()),
+        ],
+      );
+  }
 }
 
 enum FolderType {
   folder,
   university,
 }
+

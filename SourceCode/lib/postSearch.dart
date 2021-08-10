@@ -6,9 +6,24 @@ class PostSearch extends StatefulWidget {
 }
 
 class _PostSearchState extends State<PostSearch> {
-
-  List<String> _previousSearches = ['test1', 'test1', 'test1', 'test1', 'test1', 'test1', 'test1', 'test1', 'test1', 'test1', ];
-  List<String> _recommendedSearches = ['test1', 'test1', 'test1', 'test1',];
+  List<String> _previousSearches = [
+    'test1',
+    'test1',
+    'test1',
+    'test1',
+    'test1',
+    'test1',
+    'test1',
+    'test1',
+    'test1',
+    'test1',
+  ];
+  List<String> _recommendedSearches = [
+    'test1',
+    'test1',
+    'test1',
+    'test1',
+  ];
 
   TextEditingController _controller;
 
@@ -31,12 +46,9 @@ class _PostSearchState extends State<PostSearch> {
           children: [
             Row(
               children: [
-                TextButton(
-                    onPressed: () => {
-                      Navigator.pop(context)
-                    },
-                    child: Icon(Icons.arrow_back)
-                ),
+                BackButton(
+                    onPressed: () => {Navigator.pop(context)},
+                    ),
                 Expanded(
                   child: TextField(
                     autofocus: true,
@@ -57,11 +69,10 @@ class _PostSearchState extends State<PostSearch> {
                   physics: ScrollPhysics(),
                   itemBuilder: (BuildContext context, int index) {
                     return TextButton(
-                      onPressed: () => {
-
-                      },
+                      onPressed: () => {},
                       child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                         child: Row(
                           children: [
                             Text(_previousSearches[index]),
@@ -70,24 +81,22 @@ class _PostSearchState extends State<PostSearch> {
                         ),
                       ),
                     );
-                  }
-              ),
+                  }),
             ),
             Divider(
-              color: Colors.black,
               height: 1,
-            ),          Text('Recommended for you'),
+            ),
+            Text('Recommended for you'),
             Expanded(
               child: ListView.builder(
                   itemCount: _recommendedSearches.length,
                   physics: ScrollPhysics(),
                   itemBuilder: (BuildContext context, int index) {
                     return TextButton(
-                      onPressed: () => {
-
-                      },
+                      onPressed: () => {},
                       child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                         child: Row(
                           children: [
                             Icon(Icons.folder),
@@ -96,8 +105,7 @@ class _PostSearchState extends State<PostSearch> {
                         ),
                       ),
                     );
-                  }
-              ),
+                  }),
             ),
           ],
         ),

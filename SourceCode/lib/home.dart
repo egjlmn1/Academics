@@ -1,67 +1,70 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:academics/postUtils.dart';
-import 'package:academics/schemes.dart';
+import 'package:academics/events.dart';
+import 'package:academics/posts/postUtils.dart';
+import 'package:academics/posts/schemes.dart';
 import 'package:flutter/material.dart';
 
+class PostsPage extends StatefulWidget {
+  EventHandler eventHandler;
+  PostsPage({this.eventHandler});
 
-
-class HomePage extends StatefulWidget {
   @override
-  _HomePageState createState() => _HomePageState();
+  _PostsPageState createState() => _PostsPageState();
 }
 
-
-class _HomePageState extends State<HomePage> {
+class _PostsPageState extends State<PostsPage> {
+  Widget posts;
 
   @override
   void initState() {
     super.initState();
+    posts = createPostPage('posts', context);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black12,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Container(
-            color: Colors.white,
-            child: Column(
-              children: [
-                TextButton(
-                  onPressed: () => {
-                    Navigator.pushNamed(context, '/post_search')
-                  },
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                    child: Row(
-                      children: [
-                        Text('search'),
-                        Icon(Icons.search),
-                      ],
-                    ),
-                  ),
-                ),
-                Divider(
-                  color: Colors.black,
-                  height: 1,
-                ),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 30, vertical: 5),
+            child: Column(children: [
+              TextButton(
+                onPressed: () => {Navigator.pushNamed(context, '/post_search')},
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                   child: Row(
                     children: [
-                      Text('test'),
+                      Text('search'),
+                      Icon(Icons.search),
                     ],
                   ),
-                )
-              ]
-            ),
+                ),
+              ),
+              Divider(
+                height: 1,
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 30, vertical: 5),
+                child: Row(
+                  children: [
+                    Text('test'),
+                  ],
+                ),
+              )
+            ]),
           ),
           Expanded(
-            child: fetchPosts('home_posts'),
+            child: RefreshIndicator(
+                onRefresh: () async {
+                  setState(() {
+                    posts = createPostPage('posts', context);
+                  });
+                  return;
+                },
+                child: posts),
           ),
         ],
       ),

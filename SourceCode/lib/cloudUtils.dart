@@ -30,3 +30,11 @@ Future<String> uploadObject(String path, Map<String, dynamic> object) async {
       .catchError((error) => print("Failed to upload to firestore: $error"));
   return ref.toString();
 }
+
+Future<String> deleteObject(String path, String id) async {
+  /**
+   * function get a id of the object and a path, delete it from firestore
+   */
+  CollectionReference posts = FirebaseFirestore.instance.collection(path);
+  posts.doc(id).delete();
+}

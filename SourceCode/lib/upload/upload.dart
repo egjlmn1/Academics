@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:textfield_tags/textfield_tags.dart';
 import '../chooseFolder.dart';
 import '../cloudUtils.dart';
-import '../schemes.dart';
+import '../posts/schemes.dart';
 
 class UploadPage extends StatefulWidget {
 
@@ -28,7 +28,7 @@ class _UploadPageState extends State<UploadPage> {
   void postClicked() {
     var valid = isValid();
     if (valid) {
-      ShowPost post = ShowPost(
+      Post post = Post(
         username: 'TODO(get current username)',
         folder: _folder,
         title: _titleController.text,
@@ -55,7 +55,7 @@ class _UploadPageState extends State<UploadPage> {
     });
   }
 
-  void sendPost(ShowPost post) async {
+  Future<bool> sendPost(Post post) async {
     /**
      * create the data type of the post
      * if needs to upload to cloud storage, get the url of the file
@@ -65,11 +65,13 @@ class _UploadPageState extends State<UploadPage> {
     File f = widget._postType.file();
     if (f != null) {
        url = await uploadFile(f);
+       return false;
     }
     post.typeData = widget._postType.createDataObject(url);
 
     var id = await uploadObject('posts', post.toJson());
     print('post uploaded $id');
+    return id != null;
   }
 
   void showErrors() {
@@ -97,11 +99,10 @@ class _UploadPageState extends State<UploadPage> {
                 children: [
                   Row(
                     children: [
-                      TextButton(
+                      BackButton(
                           onPressed: () => {
                             Navigator.pop(context)
                           },
-                          child: Icon(Icons.arrow_back)
                       ),
                       Text(widget._postType.type)
                     ],
@@ -118,7 +119,6 @@ class _UploadPageState extends State<UploadPage> {
                   ),
                   widget._postType.createUploadPage(),
                   Divider(
-                    color: Colors.black,
                     height: 1,
                   ),
                   Container(
@@ -142,7 +142,6 @@ class _UploadPageState extends State<UploadPage> {
                     ),
                   ),
                   Divider(
-                    color: Colors.black,
                     height: 1,
                   ),
                   Container(
@@ -162,7 +161,6 @@ class _UploadPageState extends State<UploadPage> {
                     ),
                   ),
                   Divider(
-                    color: Colors.black,
                     height: 1,
                   ),
                   Container(
@@ -245,12 +243,12 @@ class ChooseUpload{
                       entry.remove();
                     },
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Icon(Icons.question_answer, size: 40,color: Colors.black,),
+                        CircleAvatar(backgroundColor: Colors.black, radius: 15, child: Icon(Icons.question_answer, size: 20, color: Colors.white,)),
                         Text(options[index],style: TextStyle(
+                          color: Colors.white,
                           fontSize: 10,
-                          color: Colors.black,
                         ),),
                       ],
                     ),

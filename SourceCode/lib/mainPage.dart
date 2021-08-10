@@ -1,27 +1,45 @@
-import 'package:academics/folders.dart';
 import 'package:academics/home.dart';
 import 'package:academics/profile.dart';
 import 'package:academics/testing.dart';
 import 'package:academics/upload/upload.dart';
 import 'package:academics/inbox.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import 'DarkTheme.dart';
+import 'events.dart';
+import 'folders/folderPage.dart';
+import 'folders/myFolders.dart';
 
-class MainPage extends StatefulWidget {
+class Home extends StatefulWidget {
   @override
-  _MainPageState createState() => _MainPageState();
+  _HomeState createState() => _HomeState();
 }
 
-class _MainPageState extends State<MainPage> {
+class _HomeState extends State<Home> {
   Page _selectedPage = Page.home;
-  List<Widget> pages = [HomePage(), FoldersPage(), null, InboxPage(), ProfilePage()];
-  OverlayEntry _uploadOverlay;
+  List<Widget> pages;
 
+  _HomeState() {
+    EventHandler eventHandlers = EventHandler();
+    pages = [
+      PostsPage(eventHandler: eventHandlers,),
+      FolderPage(eventHandler: eventHandlers,),
+      null,
+      InboxPage(),
+      ProfilePage()
+    ];
+  }
+
+
+
+  OverlayEntry _uploadOverlay;
 
   @override
   Widget build(BuildContext context) {
+    final themeChange = Provider.of<DarkThemeProvider>(context);
+
     return WillPopScope(
-      // ignore: missing_return
       onWillPop: () {
         if (_uploadOverlay != null) {
           _uploadOverlay.remove();
@@ -30,7 +48,6 @@ class _MainPageState extends State<MainPage> {
         } else {
           if (_selectedPage == Page.home) {
             return Future.value(true);
-            //exit(0);
           } else {
             _onItemTapped(Page.home.index);
             return Future.value(false);
@@ -38,7 +55,7 @@ class _MainPageState extends State<MainPage> {
         }
       },
       child: Scaffold(
-        body: SafeArea(child: getPage(_selectedPage)),
+        body: SafeArea(child: getPage()),
         bottomNavigationBar: BottomNavigationBar(
           items: const <BottomNavigationBarItem>[
             BottomNavigationBarItem(
@@ -63,14 +80,15 @@ class _MainPageState extends State<MainPage> {
             ),
           ],
           unselectedItemColor: Colors.black12,
+          selectedItemColor: Colors.amber[800],
           showUnselectedLabels: true,
           currentIndex: _selectedPage.index,
-          selectedItemColor: Colors.amber[800],
           onTap: _onItemTapped,
         ),
       ),
     );
   }
+
   void _onItemTapped(int index) {
     if (index == Page.upload.index) {
       _uploadOverlay = ChooseUpload.getUploadOverlay(context);
@@ -81,8 +99,9 @@ class _MainPageState extends State<MainPage> {
       });
     }
   }
-  Widget getPage(Page p) {
-    return pages[p.index];
+
+  Widget getPage() {
+    return pages[_selectedPage.index];
   }
 }
 
@@ -93,4 +112,3 @@ enum Page {
   inbox,
   profile,
 }
-
