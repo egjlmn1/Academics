@@ -29,29 +29,34 @@ class DarkThemeProvider with ChangeNotifier {
   }
 }
 
-
 class Styles {
-
   static ThemeData themeData(bool isDarkTheme, BuildContext context) {
     return ThemeData(
+      textTheme: TextTheme(
+        headline1: TextStyle(
+            fontSize: 72.0,
+            fontWeight: FontWeight.bold,
+            color: isDarkTheme ? Colors.white : Colors.black),
+        headline2: TextStyle(
+            fontSize: 24.0, color: isDarkTheme ? Colors.white : Colors.black),
+        subtitle1: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: isDarkTheme ? Colors.white : Colors.black),
+        bodyText2: TextStyle(color: isDarkTheme ? Colors.white : Colors.black),
+      ),
       primarySwatch: Colors.blue,
-      primaryColor: isDarkTheme ? Colors.black : Color(0xffffffff),
-
-      backgroundColor: isDarkTheme ? Colors.black : Color(0xff3a5b8d),
-
-      indicatorColor: isDarkTheme ? Color(0xff0E1D36) : Color(0xffCBDCF8),
+      primaryColor: isDarkTheme ? Colors.blue : Colors.blue,
+      backgroundColor: isDarkTheme ? Colors.black : Color(0xffe4edee),
+      indicatorColor: isDarkTheme ? Colors.grey.shade600 : Colors.grey.shade200,
       buttonColor: isDarkTheme ? Color(0xff3B3B3B) : Color(0xffF1F5FB),
-
-      hintColor: isDarkTheme ? Color(0xff280C0B) : Color(0xffEECED3),
-
+      hintColor: isDarkTheme ? Color(0xffd4c1c1) : Color(0xffb8b8b8),
       highlightColor: isDarkTheme ? Color(0xff372901) : Color(0xffFCE192),
       hoverColor: isDarkTheme ? Color(0xff3A3A3B) : Color(0xff4285F4),
-
       focusColor: isDarkTheme ? Color(0xff0B2512) : Color(0xffA8DAB5),
       disabledColor: Colors.grey,
-      textSelectionColor: isDarkTheme ? Colors.white : Colors.black,
       cardColor: isDarkTheme ? Color(0xFF151515) : Colors.white,
-      canvasColor: isDarkTheme ? Colors.black : Color(0xffe4edee),
+      accentColor: isDarkTheme ? Colors.white : Colors.black,
+      canvasColor: isDarkTheme ? Colors.black : Colors.white,
       brightness: isDarkTheme ? Brightness.dark : Brightness.light,
       buttonTheme: Theme.of(context).buttonTheme.copyWith(
           colorScheme: isDarkTheme ? ColorScheme.dark() : ColorScheme.light()),
@@ -59,6 +64,5 @@ class Styles {
         elevation: 0.0,
       ),
     );
-
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class PostSearch extends StatefulWidget {
   @override
@@ -6,29 +7,13 @@ class PostSearch extends StatefulWidget {
 }
 
 class _PostSearchState extends State<PostSearch> {
-  List<String> _previousSearches = [
-    'test1',
-    'test1',
-    'test1',
-    'test1',
-    'test1',
-    'test1',
-    'test1',
-    'test1',
-    'test1',
-    'test1',
-  ];
-  List<String> _recommendedSearches = [
-    'test1',
-    'test1',
-    'test1',
-    'test1',
-  ];
+  Future<List<String>> _previousSearches;
 
   TextEditingController _controller;
 
   void initState() {
     super.initState();
+    _previousSearches = loadSearches();
     _controller = TextEditingController();
   }
 
@@ -39,77 +24,84 @@ class _PostSearchState extends State<PostSearch> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        body: Column(
+    return Scaffold(
+      appBar: AppBar(),
+      body: SafeArea(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              children: [
-                BackButton(
-                    onPressed: () => {Navigator.pop(context)},
-                    ),
-                Expanded(
-                  child: TextField(
-                    autofocus: true,
-                    onChanged: (search) {
-                      print('search in post search changed to: $search');
-                    },
-                    onSubmitted: (search) {
-                      print('search in post search submitted on: $search');
-                    },
-                  ),
-                )
-              ],
+            TextField(
+              autofocus: true,
+              maxLength: 64,
+              onSubmitted: (search) {
+                addSearch(search);
+                Navigator.of(context).pop(search);
+              },
             ),
-            Container(
-              height: 200,
-              child: ListView.builder(
-                  itemCount: _previousSearches.length,
-                  physics: ScrollPhysics(),
-                  itemBuilder: (BuildContext context, int index) {
-                    return TextButton(
-                      onPressed: () => {},
-                      child: Container(
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                        child: Row(
-                          children: [
-                            Text(_previousSearches[index]),
-                            Icon(Icons.close),
-                          ],
-                        ),
-                      ),
-                    );
-                  }),
-            ),
-            Divider(
-              height: 1,
-            ),
-            Text('Recommended for you'),
             Expanded(
-              child: ListView.builder(
-                  itemCount: _recommendedSearches.length,
-                  physics: ScrollPhysics(),
-                  itemBuilder: (BuildContext context, int index) {
-                    return TextButton(
-                      onPressed: () => {},
-                      child: Container(
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                        child: Row(
-                          children: [
-                            Icon(Icons.folder),
-                            Text(_previousSearches[index]),
-                          ],
-                        ),
-                      ),
-                    );
-                  }),
+              child: FutureBuilder(
+                future: _previousSearches,
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    return ListView.builder(
+                        itemCount: snapshot.data.length,
+                        physics: ScrollPhysics(),
+                        itemBuilder: (BuildContext context, int index) {
+                          return Row(
+                            children: [
+                              TextButton(
+                                onPressed: () async {
+                                  addSearch(snapshot.data[index]);
+                                  Navigator.of(context).pop(snapshot.data[index]);
+                                },
+                                child: Container(
+                                  padding:
+                                  EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                                  child: Text(snapshot.data[index]),
+                                ),
+                              ),
+                              IconButton(onPressed: () {
+                                _previousSearches = removeSearch(snapshot.data[index]);
+                                setState(() {
+
+                                });
+                              }, icon: Icon(Icons.close))
+                            ],
+                          );
+                        });
+                  }
+                  return Container();
+                }
+              ),
             ),
           ],
         ),
       ),
     );
   }
+
+  Future<List<String>> removeSearch(String search) async {
+    List<String> previous = await _previousSearches;
+    previous.remove(search);
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setStringList('previousSearch', previous);
+    return previous;
+  }
+
+  void addSearch(String search) async {
+    List<String> previous = await _previousSearches;
+    if (previous.contains(search)) {
+      previous.remove(search);
+    }
+    previous.insert(0, search);
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setStringList('previousSearch', previous);
+  }
+
+  Future<List<String>> loadSearches() async {
+    final prefs = await SharedPreferences.getInstance();
+    List<String> searches = prefs.getStringList('previousSearch') ?? [];
+    return searches;
+  }
+
 }

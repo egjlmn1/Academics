@@ -24,22 +24,22 @@ dependencies:
   flutter:
     sdk: flutter
   textfield_tags: ^1.1.0+1
-  image_picker: ^0.6.6+5
-  file_picker: ^2.1.1
+  image_picker: ^0.8.4
+  file_picker: ^4.0.1
+  flutter_cached_pdfview: ^0.4.0-nullsafety
+  percent_indicator: ^3.0.1
 
-  firebase_core: ^0.7.0
-  firebase_storage: ^7.0.0
+  firebase_core: null
+  firebase_storage: null
   firebase_analytics: ^5.0.2
-  firebase_auth: ^0.20.1
-  #firebase_auth_ui: ^1.0.1
-  google_sign_in: ^4.5.9
+  firebase_auth: ^3.1.0
+  cloud_firestore: null
 
-  cloud_firestore: ^0.16.0+1
-
-  shared_preferences: ^2.0.5
-  flutter_login: ^1.0.0
+  google_sign_in: ^5.0.2
+  http: ^0.13.3
+  shared_preferences: ^0.5.4+1
   provider: ^4.0.0
-
+  transparent_image: ^2.0.0
 
 
   # The following adds the Cupertino Icons font to your application.

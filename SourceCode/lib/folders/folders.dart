@@ -14,9 +14,8 @@ class Folder {
   IconData icon() {
     if (type == FolderType.folder) {
       return Icons.folder;
-    } else {
-      return Icons.school;
     }
+    return Icons.folder;
   }
 
   String name() {
@@ -27,7 +26,7 @@ class Folder {
     return Row(
         children: [
           Icon(icon()),
-          Text(name()),
+          Flexible(child: Text(name())),
         ],
       );
   }
@@ -35,6 +34,6 @@ class Folder {
 
 enum FolderType {
   folder,
-  university,
+  user,
 }
 

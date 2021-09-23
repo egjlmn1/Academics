@@ -1,7 +1,10 @@
 import 'dart:async';
-import 'dart:convert';
-
 import 'package:academics/folders/folders.dart';
+import 'package:academics/posts/postBuilder.dart';
+import 'package:academics/user/httpUtils.dart';
+import 'package:academics/user/user.dart';
+import 'package:academics/user/userUtils.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import 'package:academics/posts/schemes.dart';
@@ -9,190 +12,183 @@ import 'package:flutter/cupertino.dart';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../cloudUtils.dart';
-import '../folders/foldersUtil.dart';
+import 'package:intl/intl.dart';
 
-Post decodePost(QueryDocumentSnapshot data) {
+import '../cloudUtils.dart';
+import '../errors.dart';
+
+Post decodePost(data) {
   Map m = data.data();
   m['id'] = data.id;
   return Post.fromJson(m);
 }
 
-Widget createPostsList(List<Post> posts, BuildContext context) {
-  return ListView.builder(
-      itemCount: posts.length,
-      physics: ScrollPhysics(),
-      itemBuilder: (BuildContext context, int index) {
-        return Container(
-          child: createPost(posts[index], context),
-        );
-      });
+List<Widget> createPostsList(List<Post> posts, BuildContext context) {
+  return [
+    for (Post post in posts)
+      OutlinedButton(
+        onPressed: () {
+          Navigator.of(context).pushNamed('/post_page', arguments: post.id);
+        },
+        style: ButtonStyle(
+          backgroundColor:
+              MaterialStateProperty.all(Theme.of(context).cardColor),
+        ),
+        child: PostCreator(post: post, context: context).buildHintPost(),
+      )
+  ];
 }
 
-Future<List<Post>> fetchPosts(String posts_endpoint) async {
-  CollectionReference ref = FirebaseFirestore.instance.collection('posts'); //TODO switch to endpoint
-  List<Post> posts = (await ref.get()).docs.map((e)=>decodePost(e)).toList();
+Future<List<Post>> fetchPosts(
+    {List<String> ids, Folder folder, String user, bool filter = true}) async {
+  List docs;
+  if (ids != null) {
+    docs = await fetchInBatches('posts', ids);
+  } else if (folder != null) {
+    try {
+      String folderId;
+      String collection;
+      if (folder.type == FolderType.folder) {
+        folderId = await findDocId('folders', 'path', folder.path);
+        collection = 'folders';
+      } else if (folder.type == FolderType.user) {
+        folderId = folder.path;
+        collection = 'userFolders';
+        //In userFolder save the folder path to be the id because may have multiple folders with same name for different users
+      } else {
+        print('folder has no type');
+        return [];
+      }
+      List<String> ids = List.from((await FirebaseFirestore.instance
+              .collection(collection)
+              .doc(folderId)
+              .collection('posts')
+              .get())
+          .docs
+          .map((e) => e.get('id').toString()));
+
+      if (ids.isEmpty) {
+        return [];
+      }
+      docs = await fetchInBatches('posts', ids);
+    } catch (e) {
+      print('fetchPosts $e');
+      return [];
+    }
+  } else if (user != null) {
+    try {
+      List<String> ids = (await fetchUser(user)).posts;
+      docs = await fetchInBatches('posts', ids);
+    } catch (e) {
+      docs = [];
+    }
+  } else {
+    Query ref = FirebaseFirestore.instance.collection('posts');
+    docs = (await (ref).get()).docs;
+  }
+  List<Post> posts = List.from(docs.map((e) => decodePost(e)));
+  if (filter) {
+    posts = await filterPosts(posts);
+  }
+  posts.sort((a, b) => b.uploadTime.compareTo(a.uploadTime));
+
   return posts;
 }
 
-Widget createPostPage(String posts_endpoint, BuildContext context) {
-  return FutureBuilder<List<Post>>(
-    future: fetchPosts(posts_endpoint),
-    builder: (context, snapshot) {
-      if (snapshot.hasData) {
-        return createPostsList(snapshot.data, context);
-      } else if (snapshot.hasError) {
-        return Text(snapshot.error
-            .toString()
-            .substring(11)); //removes the 'Exception: ' prefix
-      }
-      return Container();
-    },
+Future<List<Post>> fetchSmartPosts(
+    {String search = '', int limit = 100, String lastId}) {
+  return fetchHttpPosts(search, limit, lastId: lastId);
+}
+
+Future<List<Post>> filterPosts(List<Post> posts) async {
+  try {
+    AcademicsUser user = await fetchUser(FirebaseAuth.instance.currentUser.uid);
+    List<String> filtered = PostType.filtered(user.filters);
+    posts = List.from(posts.where((post) => filtered.contains(post.type)));
+  } catch (e) {
+    print('filterPosts $e');
+  }
+  return posts;
+}
+
+Future<Post> fetchPost(String id) async {
+  DocumentReference ref =
+      FirebaseFirestore.instance.collection('posts').doc(id);
+  Post post = decodePost(await ref.get());
+  return post;
+}
+
+Future<void> addToFolder(String id, String folder) async {
+  var folderId = await findDocId('folders', 'path', folder);
+  await uploadObject('folders', {'id': id},
+      doc: folderId, subCollection: 'posts');
+}
+
+Widget createPostPage(Future<List<Post>> posts, BuildContext context,
+    {Function loadMore}) {
+  return Container(
+    color: Theme.of(context).backgroundColor,
+    child: FutureBuilder<List<Post>>(
+      future: posts,
+      builder: (context, snapshot) {
+        if (snapshot.hasData) {
+          if (snapshot.data.isEmpty) {
+            return Center(
+                child: ListView(
+              children: [
+                Container(
+                  padding: EdgeInsets.symmetric(vertical: 40),
+                  child: Text('Wow Such Empty',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.headline2),
+                ),
+              ],
+            ));
+          }
+          return ListView(
+            physics: AlwaysScrollableScrollPhysics(),
+            children: [
+              for (Widget post in createPostsList(snapshot.data, context)) post,
+              if (loadMore != null)
+                OutlinedButton(
+                  child: Container(
+                      padding: EdgeInsets.symmetric(vertical: 10),
+                      child: Column(
+                        children: [
+                          Text('Load more'),
+                          Icon(Icons.add_circle_outline),
+                        ],
+                      )),
+                  onPressed: () {
+                    loadMore(snapshot.data.last.id);
+                  },
+                )
+            ],
+          );
+        } else if (snapshot.hasError) {
+          print(snapshot
+              .error); // .substring(11)); //removes the 'Exception: ' prefix
+          return errorWidget('An error occured while fetching posts', context);
+        }
+        return Container();
+      },
+    ),
   );
 }
 
-Widget createPost(Post post, BuildContext context) {
-  return PostCreator(post: post, context: context).buildPost();
-}
-
-class PostCreator {
-  Post post;
-  BuildContext context;
-
-  PostCreator({this.post, this.context});
-
-  Widget buildPost() {
-    return Card(
-        child: Column(
-      children: [
-        createPostTopBar(post),
-        Divider(),
-        Container(
-          padding: EdgeInsets.symmetric(horizontal: 5, vertical: 5),
-          alignment: Alignment.topLeft,
-          child: Text(
-            post.title,
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-        ),
-        Container(
-          alignment: Alignment.topLeft,
-          child: post.typeData.createWidget(),
-        ),
-      ],
-    ));
+String timeToText(int time) {
+  DateTime now = DateTime.now();
+  DateTime then = DateTime.fromMillisecondsSinceEpoch(time);
+  Duration timeAgo = now.difference(then);
+  if (timeAgo.inDays > 3 || timeAgo.inSeconds < 0) {
+    return DateFormat('dd/MM/yy').format(then);
+  } else if (timeAgo.inHours > 23) {
+    return '${timeAgo.inDays} days ago';
+  } else if (timeAgo.inMinutes > 59) {
+    return '${timeAgo.inHours} hours ago';
+  } else if (timeAgo.inSeconds > 59) {
+    return '${timeAgo.inMinutes} mins ago';
+  } else {
+    return '${timeAgo.inSeconds} secs ago';
   }
-
-  Widget buildPostPage() {
-    return Column(
-      children: [
-        buildPost(),
-        //TODO comments
-      ],
-    );
-  }
-
-  Widget createPostTopBar(Post post) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(post.type),
-              Text(post.folder.split('\\').last),
-              PopupMenuButton<String>(
-                onSelected: postActionSelect,
-                itemBuilder: (BuildContext context) {
-                  return PostActions.values.map((PostActions choice) {
-                    return PopupMenuItem<String>(
-                      child: Text(choice.toString().split('.')[1]),
-                      value: choice.toString(),
-                    );
-                  }).toList();
-                },
-              )
-            ],
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              Text(post.username),
-              if (post.university != null) Text(post.university)
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  void savePost() async {
-    var folders = getUserFolders();
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(40)),
-          elevation: 16,
-          child: Container(
-            child: createFolders(folders),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget createFolders(List<Folder> folders) {
-    var buttons = List.generate(folders.length, (index) {
-      return TextButton(
-        onPressed: () {},
-        child: folders[index].build(),
-      );
-    });
-    buttons.add(TextButton(
-      onPressed: () {
-
-      },
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('Create new Folder',
-                style: TextStyle(
-                  fontSize: 25,
-                ),
-              textAlign: TextAlign.center,
-
-            ),
-            Icon(Icons.add, size: 25,),
-          ],
-        ),
-      ),
-    ));
-    return GridView.count(
-      crossAxisCount: 2,
-      crossAxisSpacing: 4.0,
-      mainAxisSpacing: 4.0,
-      children: buttons,
-    );
-  }
-
-  void postActionSelect(String choice) {
-    if (choice == PostActions.Save.toString()) {
-      savePost();
-    } else if (choice == PostActions.Delete.toString()) {
-      deleteObject('posts', post.id);
-    } else {}
-  }
-
-
-}
-
-
-
-enum PostActions {
-  Save,
-  Delete,
 }
