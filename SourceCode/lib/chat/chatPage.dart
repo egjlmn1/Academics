@@ -220,7 +220,7 @@ class _ChatPageState extends State<ChatPage> {
                           size: 20,
                         ),
                         onPressed: () {
-                          onSendMessage(_sendMessageController.text);
+                          onSendMessage(_sendMessageController.text.trim());
                         })
                   ],
                 ),
@@ -232,17 +232,6 @@ class _ChatPageState extends State<ChatPage> {
       ],
     );
   }
-
-  // Widget showEmojiPicker() {
-  //   return EmojiPicker(
-  //     rows: 4,
-  //     columns: 7,
-  //     onEmojiSelected: (emoji, category) {
-  //       print(emoji);
-  //       _sendMessageController.text = _sendMessageController.text + emoji.emoji;
-  //     },
-  //   );
-  // }
 
   void onSendMessage(String content) async {
     // type: 0 = text, 1 = post

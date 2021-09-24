@@ -85,7 +85,7 @@ class _PostsPageState extends State<PostsPage> {
         Expanded(
           child: RefreshIndicator(
               onRefresh: _refreshData,
-              child: createPostPage(fetchSmartPosts(search: search, limit: 100, lastId: lastPostId), context, loadMore: (String id) {
+              child: createPostPage(fetchSmartPosts(search: search, limit: fetchPostsLimit, lastId: lastPostId), context, loadMore: (String id) {
                 setState(() {
                   lastPostId=id;
                 });

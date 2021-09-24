@@ -799,7 +799,7 @@ class UploadComment extends StatelessWidget {
         ),
         IconButton(
             onPressed: () async {
-              if (textController.text.isNotEmpty) {
+              if (textController.text.trim().isNotEmpty) {
                 String username;
                 try {
                   username =
@@ -813,7 +813,7 @@ class UploadComment extends StatelessWidget {
                     {
                       'userid': FirebaseAuth.instance.currentUser.uid,
                       'username': username,
-                      'text': textController.text,
+                      'text': textController.text.trim(),
                       'time': DateTime.now().millisecondsSinceEpoch,
                     },
                     doc: postId,

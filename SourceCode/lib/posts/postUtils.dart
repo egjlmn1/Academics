@@ -17,6 +17,8 @@ import 'package:intl/intl.dart';
 import '../cloudUtils.dart';
 import '../errors.dart';
 
+int fetchPostsLimit = 100;
+
 Post decodePost(data) {
   Map m = data.data();
   m['id'] = data.id;
@@ -149,7 +151,7 @@ Widget createPostPage(Future<List<Post>> posts, BuildContext context,
             physics: AlwaysScrollableScrollPhysics(),
             children: [
               for (Widget post in createPostsList(snapshot.data, context)) post,
-              if (loadMore != null)
+              if (loadMore != null && snapshot.data.length == fetchPostsLimit)
                 OutlinedButton(
                   child: Container(
                       padding: EdgeInsets.symmetric(vertical: 10),

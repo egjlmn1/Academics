@@ -129,7 +129,7 @@ class _ChooseFolderState extends State<ChooseFolder> {
               ),
             ),
             Expanded(
-              child: createFolderList(getFolders(folderTextFieldController.text), (Folder folder) {
+              child: createFolderList(getFolders(folderTextFieldController.text.trim()), (Folder folder) {
                 setState(() {
                   folderTextFieldController.clear();
                   pickFolder(folder.path);

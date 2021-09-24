@@ -28,7 +28,7 @@ import 'DarkTheme.dart';
 import 'upload/uploadType.dart';
 import 'upload/uploadPage.dart';
 import 'authenticate/authPage.dart';
-import 'postSearch.dart';
+import 'posts/postSearch.dart';
 
 import 'dart:io';
 import 'package:path/path.dart';

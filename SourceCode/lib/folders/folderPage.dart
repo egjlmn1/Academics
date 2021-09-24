@@ -109,7 +109,7 @@ class _FolderPageState extends State<FolderPage> {
                   ),
                 ),
                 Expanded(
-                    child: createFolderList(fetchSubFolders(_path, prefix: folderController.text), (Folder folder) {
+                    child: createFolderList(fetchSubFolders(_path, prefix: folderController.text.trim()), (Folder folder) {
                   setState(() {
                     _path = folder.path;
                     _selectedPage = 0;

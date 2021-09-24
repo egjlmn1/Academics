@@ -146,7 +146,7 @@ class _UploadToFoldersState extends State<UploadToFolders> {
               new TextButton(
                 child: new Text('Submit'),
                 onPressed: () {
-                  if (controller.text.isEmpty) {
+                  if (controller.text.trim().isEmpty) {
                     showError('Enter folder name', context);
                   } else {
                     Navigator.of(context).pop();
@@ -156,7 +156,7 @@ class _UploadToFoldersState extends State<UploadToFolders> {
             ],
           );
         });
-    return controller.text;
+    return controller.text.trim();
   }
 }
 
@@ -246,7 +246,6 @@ class _SearchUserState extends State<SearchUser> {
       SizedBox(
         height: 50,
         child: TextField(
-          controller: TextEditingController(),
           onChanged: (String text) {
             setState(() {
               _searchPrefix = text;

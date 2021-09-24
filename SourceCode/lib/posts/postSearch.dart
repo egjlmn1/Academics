@@ -34,8 +34,8 @@ class _PostSearchState extends State<PostSearch> {
               autofocus: true,
               maxLength: 64,
               onSubmitted: (search) {
-                addSearch(search);
-                Navigator.of(context).pop(search);
+                addSearch(search.trim());
+                Navigator.of(context).pop(search.trim());
               },
             ),
             Expanded(

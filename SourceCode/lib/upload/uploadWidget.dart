@@ -75,10 +75,10 @@ class TitleUploadWidget extends _UploadWidgetState {
 
   @override
   Object data() {
-    if (required && _textController.text.isEmpty) {
+    if (required && _textController.text.trim().isEmpty) {
       return null;
     }
-    return _textController.text;
+    return _textController.text.trim();
   }
 }
 
@@ -110,10 +110,10 @@ class TextUploadWidget extends _UploadWidgetState {
 
   @override
   Object data() {
-    if (required && _textController.text.isEmpty) {
+    if (required && _textController.text.trim().isEmpty) {
       return null;
     }
-    return _textController.text;
+    return _textController.text.trim();
   }
 }
 
@@ -317,7 +317,7 @@ class PollUploadWidget extends _UploadWidgetState {
   @override
   Object data() {
     return List<String>.from(
-        _polls.map((e) => e.text));
+        _polls.map((e) => e.text.trim()));
   }
 }
 
@@ -383,7 +383,7 @@ class ChoicesUploadWidget extends _UploadWidgetState {
     if (chosen == null) {
       return null;
     } else if(chosen == choices.length) {
-      return _otherController.text.isNotEmpty ? _otherController.text : null;
+      return _otherController.text.trim().isNotEmpty ? _otherController.text.trim() : null;
     }
     return choices[chosen];
   }

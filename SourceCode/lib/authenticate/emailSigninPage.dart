@@ -99,15 +99,19 @@ class _EmailSignInPageState extends State<EmailSignInPage> {
               :TextButton(
               onPressed: () async {
 
-                if (emailController.text.isEmpty) {
+                String email = emailController.text.trim();
+                String password = passwordController.text.trim();
+                String name = nameController.text.trim();
+
+                if (email.isEmpty) {
                   showError('email is empty', context);
                   return;
                 }
-                if (register && nameController.text.isEmpty) {
+                if (register && name.isEmpty) {
                   showError('password is empty', context);
                   return;
                 }
-                if (passwordController.text.isEmpty) {
+                if (password.isEmpty) {
                   showError('password is empty', context);
                   return;
                 }
@@ -118,8 +122,8 @@ class _EmailSignInPageState extends State<EmailSignInPage> {
                 User user;
                 try {
                   user = (await method(
-                          email: emailController.text,
-                          password: passwordController.text))
+                          email: email,
+                          password: password))
                       .user;
                 } catch (e) {
                   showError(e.code, context);
@@ -128,7 +132,7 @@ class _EmailSignInPageState extends State<EmailSignInPage> {
                   });
                   return;
                 }
-                login(context, user, displayName: (register)?nameController.text:null);
+                login(context, user, displayName: (register)?name:null);
               },
               child: Text(register ? 'Register' : 'Login')),
         ],

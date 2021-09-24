@@ -98,7 +98,7 @@ class ChatListPageState extends State<ChatListPage> {
                 content: NewGroup(controller: controller, myUsers: users,),
                 actions: [
                   TextButton(onPressed: () {
-                    if (controller.text.isEmpty) {
+                    if (controller.text.trim().isEmpty) {
                       showError('Enter group name', context);
                       return;
                     }
@@ -106,7 +106,7 @@ class ChatListPageState extends State<ChatListPage> {
                       showError('Add members', context);
                       return;
                     }
-                    createGroupChat(List<String>.from(users.keys), controller.text);
+                    createGroupChat(List<String>.from(users.keys), controller.text.trim());
                     Navigator.of(context).pop();
                   }, child: Text('Create'))
                 ],

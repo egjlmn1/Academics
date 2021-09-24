@@ -33,7 +33,7 @@ class SwitchToBusiness extends StatelessWidget {
                     ? 'Switch to Student Account'
                     : 'Switch to Business Account'),
                 onPressed: () async {
-                  if (_controller.text.isNotEmpty) {
+                  if (_controller.text.trim().isNotEmpty) {
                     await updateObject(
                         Collections.users,
                         FirebaseAuth.instance.currentUser.uid,
@@ -43,7 +43,7 @@ class SwitchToBusiness extends StatelessWidget {
                         Collections.users,
                         FirebaseAuth.instance.currentUser.uid,
                         'display_name',
-                        _controller.text);
+                        _controller.text.trim());
                     Navigator.of(context).pushNamedAndRemoveUntil('/home', (r) => false);
                   } else {
                     showError('Enter ${isBusiness ? 'display' : 'business'} name', context);
