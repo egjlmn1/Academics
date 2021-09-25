@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:academics/folders/folders.dart';
 import 'package:academics/posts/postUtils.dart';
 import 'package:academics/upload/uploadType.dart';
+import 'package:academics/user/userUtils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -27,20 +28,26 @@ class _UploadPageState extends State<UploadPage> {
   void postClicked() async {
     var valid = isValid();
     if (valid) {
-      Post post = Post(
-        username: FirebaseAuth.instance.currentUser.displayName,
-        userid: FirebaseAuth.instance.currentUser.uid,
-        folder: _folder.path,
-        title: await widget._postType.title(),
-        uploadTime: DateTime.now().millisecondsSinceEpoch,
-        upVotes: 0,
-        downVotes: 0,
-        tags: _tags,
-        type: widget._postType.type,
-      );
-      showError('Uploading post...', context);
-      String id = await sendPost(post);
-      Navigator.of(context).pop(id);
+      try {
+        Post post = Post(
+          username: (await fetchUser(FirebaseAuth.instance.currentUser.uid)).displayName,
+          userid: FirebaseAuth.instance.currentUser.uid,
+          folder: _folder.path,
+          title: await widget._postType.title(),
+          uploadTime: DateTime.now().millisecondsSinceEpoch,
+          upVotes: 0,
+          downVotes: 0,
+          tags: _tags,
+          type: widget._postType.type,
+        );
+        showError('Uploading post...', context);
+        String id = await sendPost(post);
+        showError('Post uploaded!', context);
+        Navigator.of(context).pop(id);
+      } catch(e) {
+        showError('Failed to upload post', context);
+      }
+
     } else {
       showError(widget._postType.error(), context);
     }
@@ -110,7 +117,7 @@ class _UploadPageState extends State<UploadPage> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                      Text('Folder'),
+                      Text('Select Folder'),
                       Container(
                         margin: EdgeInsets.fromLTRB(20, 0, 0, 0),
                         child: TextButton(

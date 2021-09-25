@@ -69,17 +69,6 @@ class _PostsPageState extends State<PostsPage> {
                   ),
               ],
             ),
-            Divider(
-              height: 1,
-            ),
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 30, vertical: 5),
-              child: Row(
-                children: [
-                  Text('test'),
-                ],
-              ),
-            )
           ]),
         ),
         Expanded(

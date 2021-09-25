@@ -30,7 +30,7 @@ class _UploadToFoldersState extends State<UploadToFolders> {
           }
           return FutureBuilder(
             future: fetchInBatches(
-                'userFolders', List.from(snapshot.data.map((e) => e.path))),
+                Collections.userFolders, List.from(snapshot.data.map((e) => e.path))),
             builder: (context, snapshot) {
               if (snapshot.hasData) {
                 return _createFolders(snapshot.data);
@@ -56,12 +56,12 @@ class _UploadToFoldersState extends State<UploadToFolders> {
       return TextButton(
         onPressed: () async {
           await uploadObject(
-              'userFolders',
+              Collections.userFolders,
               {
                 'id': widget.postId,
               },
               doc: items[index].id,
-              subCollection: 'posts');
+              subCollection: Collections.posts);
           Navigator.of(context).pop();
         },
         child: Center(
@@ -100,13 +100,16 @@ class _UploadToFoldersState extends State<UploadToFolders> {
   Widget createFolderButton() {
     return TextButton(
       onPressed: () async {
-        String id = await uploadObject('userFolders', {
-          'path': await askForFolderName(context),
-          'owner': FirebaseAuth.instance.currentUser.uid,
-        });
-        await addToObject(
-            Collections.users, FirebaseAuth.instance.currentUser.uid, 'folders', id);
-        setState(() {});
+        String path = await askForFolderName(context);
+        if (path != null) {
+          String id = await uploadObject(Collections.userFolders, {
+            'path': path,
+            'owner': FirebaseAuth.instance.currentUser.uid,
+          });
+          await addToObject(
+              Collections.users, FirebaseAuth.instance.currentUser.uid, 'folders', id);
+          setState(() {});
+        }
       },
       child: Center(
         child: Column(
@@ -156,7 +159,7 @@ class _UploadToFoldersState extends State<UploadToFolders> {
             ],
           );
         });
-    return controller.text.trim();
+    return controller.text.trim().isEmpty? null:controller.text.trim();
   }
 }
 

@@ -65,6 +65,7 @@ class _ChoosePostListState extends State<ChoosePostList> {
     return Column(
       children: [
         Container(
+          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
           height: 40,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,

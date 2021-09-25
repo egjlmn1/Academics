@@ -32,7 +32,7 @@ Widget createFolderList(Future<List<Folder>> folders, Function onFolderPress,
     ]),
     builder: (context, snapshot) {
       if (snapshot.hasError) {
-        print(snapshot.error);
+        print('createFolderList ${snapshot.error}');
         return errorWidget('An error while fetching folders', context);
       }
       if (snapshot.hasData) {
@@ -68,4 +68,17 @@ Widget createFolderList(Future<List<Folder>> folders, Function onFolderPress,
       return Container();
     },
   );
+}
+
+Widget folderPickRow(List<String> paths, Function(String) onClick) {
+  return Row(
+      children: List.generate(
+          paths.length,
+              (index) => Flexible(
+            child: TextButton(
+                onPressed: () {
+                  onClick(paths[index]);
+                },
+                child: Text((paths[index].split('/').last=='root')?'/':paths[index].split('/').last)),
+          )));
 }

@@ -90,15 +90,11 @@ class _InboxPageState extends State<InboxPage> {
     return Column(
       children: [
         Container(
-          margin: EdgeInsets.fromLTRB(0, 50, 0, 0),
+          color: Theme.of(context).primaryColor,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               TextButton(
-                child: Text(
-                  'Notifications',
-                  style: TextStyle(fontSize: 20),
-                ),
                 onPressed: () {
                   if (_selectedPage == 0) {
                     return;
@@ -107,12 +103,13 @@ class _InboxPageState extends State<InboxPage> {
                     _selectedPage = 0;
                   });
                 },
+                child: Text('Notifications', style: TextStyle(
+                    decoration: (_selectedPage==0) ? TextDecoration.underline:TextDecoration.none,
+                    color: Theme.of(context).accentColor,
+                    fontSize: 20
+                ),),
               ),
               TextButton(
-                child: Text(
-                  'Chats',
-                  style: TextStyle(fontSize: 20),
-                ),
                 onPressed: () {
                   if (_selectedPage == 1) {
                     return;
@@ -121,7 +118,13 @@ class _InboxPageState extends State<InboxPage> {
                     _selectedPage = 1;
                   });
                 },
-              )
+                child: Text('Chats', style: TextStyle(
+                    decoration: (_selectedPage==1) ? TextDecoration.underline:TextDecoration.none,
+                    color: Theme.of(context).accentColor,
+                    fontSize: 20
+                ),),
+
+              ),
             ],
           ),
         ),

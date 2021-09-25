@@ -45,17 +45,17 @@ Future<List<Post>> fetchPosts(
     {List<String> ids, Folder folder, String user, bool filter = true}) async {
   List docs;
   if (ids != null) {
-    docs = await fetchInBatches('posts', ids);
+    docs = await fetchInBatches(Collections.posts, ids);
   } else if (folder != null) {
     try {
       String folderId;
       String collection;
       if (folder.type == FolderType.folder) {
-        folderId = await findDocId('folders', 'path', folder.path);
-        collection = 'folders';
+        folderId = await findDocId(Collections.folders, 'path', folder.path);
+        collection = Collections.folders;
       } else if (folder.type == FolderType.user) {
         folderId = folder.path;
-        collection = 'userFolders';
+        collection = Collections.userFolders;
         //In userFolder save the folder path to be the id because may have multiple folders with same name for different users
       } else {
         print('folder has no type');
@@ -64,7 +64,7 @@ Future<List<Post>> fetchPosts(
       List<String> ids = List.from((await FirebaseFirestore.instance
               .collection(collection)
               .doc(folderId)
-              .collection('posts')
+              .collection(Collections.posts)
               .get())
           .docs
           .map((e) => e.get('id').toString()));
@@ -72,7 +72,7 @@ Future<List<Post>> fetchPosts(
       if (ids.isEmpty) {
         return [];
       }
-      docs = await fetchInBatches('posts', ids);
+      docs = await fetchInBatches(Collections.posts, ids);
     } catch (e) {
       print('fetchPosts $e');
       return [];
@@ -80,12 +80,12 @@ Future<List<Post>> fetchPosts(
   } else if (user != null) {
     try {
       List<String> ids = (await fetchUser(user)).posts;
-      docs = await fetchInBatches('posts', ids);
+      docs = await fetchInBatches(Collections.posts, ids);
     } catch (e) {
       docs = [];
     }
   } else {
-    Query ref = FirebaseFirestore.instance.collection('posts');
+    Query ref = FirebaseFirestore.instance.collection(Collections.posts);
     docs = (await (ref).get()).docs;
   }
   List<Post> posts = List.from(docs.map((e) => decodePost(e)));
@@ -97,9 +97,12 @@ Future<List<Post>> fetchPosts(
   return posts;
 }
 
-Future<List<Post>> fetchSmartPosts(
-    {String search = '', int limit = 100, String lastId}) {
-  return fetchHttpPosts(search, limit, lastId: lastId);
+Future<List<Post>> fetchSmartPosts({String search = '', int limit = 100, String lastId, bool filter = true}) async {
+  List<Post> posts = await fetchHttpPosts(search, limit, lastId: lastId);
+  if (filter) {
+    posts = await filterPosts(posts);
+  }
+  return posts;
 }
 
 Future<List<Post>> filterPosts(List<Post> posts) async {
@@ -115,15 +118,15 @@ Future<List<Post>> filterPosts(List<Post> posts) async {
 
 Future<Post> fetchPost(String id) async {
   DocumentReference ref =
-      FirebaseFirestore.instance.collection('posts').doc(id);
+      FirebaseFirestore.instance.collection(Collections.posts).doc(id);
   Post post = decodePost(await ref.get());
   return post;
 }
 
 Future<void> addToFolder(String id, String folder) async {
-  var folderId = await findDocId('folders', 'path', folder);
-  await uploadObject('folders', {'id': id},
-      doc: folderId, subCollection: 'posts');
+  var folderId = await findDocId(Collections.folders, 'path', folder);
+  await uploadObject(Collections.folders, {'id': id},
+      doc: folderId, subCollection: Collections.posts);
 }
 
 Widget createPostPage(Future<List<Post>> posts, BuildContext context,
@@ -140,7 +143,7 @@ Widget createPostPage(Future<List<Post>> posts, BuildContext context,
               children: [
                 Container(
                   padding: EdgeInsets.symmetric(vertical: 40),
-                  child: Text('Wow Such Empty',
+                  child: Text('No posts',
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.headline2),
                 ),

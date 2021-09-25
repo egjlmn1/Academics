@@ -3,8 +3,6 @@ import 'package:academics/folders/foldersUtil.dart';
 import 'package:academics/user/userUtils.dart';
 import 'package:flutter/material.dart';
 
-import '../errors.dart';
-
 class BestUsersPage extends StatefulWidget {
 
   final String folder;
@@ -18,7 +16,7 @@ class BestUsersPage extends StatefulWidget {
 class _BestUsersPageState extends State<BestUsersPage> {
   String _path = 'root';
 
-  int _currentPage = 1;
+  int _selectedPage = 1;
 
 
   @override
@@ -39,44 +37,51 @@ class _BestUsersPageState extends State<BestUsersPage> {
         .toList();
     return Column(
       children: [
-        Row(
-            children: List.generate(
-                paths.length,
-                    (index) => Flexible(
-                  child: TextButton(
-                      onPressed: () {
-                        setState(() {
-                          _path = paths[index];
-                        });
-                      },
-                      child: Text(paths[index].split('/').last)),
-                ))),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            TextButton(
-              onPressed: () {
-                if (_path != 'root') {
+        folderPickRow(paths, (String path) {
+          setState(() {
+            _path = path;
+          });
+        }),
+        Container(
+          color: Theme.of(context).primaryColor,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              TextButton(
+                onPressed: () {
+                  if (_selectedPage == 0) {
+                    return;
+                  }
                   setState(() {
-                    _currentPage = 0;
+                    _selectedPage = 0;
                   });
-                } else {
-                  showError('Pick folder', context);
-                }
-              },
-              child: Text('Users'),
-            ),
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  _currentPage = 1;
-                });
-              },
-              child: Text('Folders'),
-            )
-          ],
+                },
+                child: Text('Users', style: TextStyle(
+                    decoration: (_selectedPage==0) ? TextDecoration.underline:TextDecoration.none,
+                    color: Theme.of(context).accentColor,
+                    fontSize: 20
+                ),),
+              ),
+              TextButton(
+                onPressed: () {
+                  if (_selectedPage == 1) {
+                    return;
+                  }
+                  setState(() {
+                    _selectedPage = 1;
+                  });
+                },
+                child: Text('Folders', style: TextStyle(
+                    decoration: (_selectedPage==1) ? TextDecoration.underline:TextDecoration.none,
+                    color: Theme.of(context).accentColor,
+                    fontSize: 20
+                ),),
+
+              ),
+            ],
+          ),
         ),
-        if (_currentPage == 0)
+        if (_selectedPage == 0)
           Expanded(
             child: RefreshIndicator(
                 onRefresh: _refreshData,
@@ -87,7 +92,7 @@ class _BestUsersPageState extends State<BestUsersPage> {
             child: createFolderList(fetchSubFolders(_path), (Folder folder) {
               setState(() {
                 _path = folder.path;
-                _currentPage = 0;
+                _selectedPage = 0;
               });
             }),
           )

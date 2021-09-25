@@ -73,69 +73,82 @@ class _HomeState extends State<Home> {
                     height: 200,
                     color: Theme.of(context).primaryColor,
                   ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      TextButton(
-                        child: Text('Filter posts'),
-                        onPressed: () async {
-                          var filter = _getFilters();
-                          showDialog(
-                            context: context,
-                            builder: (BuildContext context) =>
-                                ChooseFilter(initialFilter: filter),
-                          );
-                        },
-                      ),
-                      if (user != null)
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         TextButton(
-                          child: Text(
-                              'Switch to ${user.business ? 'student' : 'business'} account'),
-                          onPressed: () {
-                            Navigator.of(context).pushNamed('/switch', arguments: user.business);
+                          child: Text('Filter posts'),
+                          onPressed: () async {
+                            var filter = _getFilters();
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) =>
+                                  ChooseFilter(initialFilter: filter),
+                            );
                           },
                         ),
-                      FutureBuilder(
-                          future:
-                              fetchUser(FirebaseAuth.instance.currentUser.uid),
-                          builder: (context, snapshot) {
-                            if (snapshot.hasError) {
-                              return Container();
-                            }
-                            if (snapshot.hasData) {
-                              if (snapshot.data.admin) {
-                                return TextButton(
-                                  child: Text('Reports page'),
-                                  onPressed: () {
-                                    Navigator.of(context).pushNamed('/reports');
-                                  },
-                                );
+                        if (user != null)
+                          TextButton(
+                            child: Text(
+                                'Switch to ${user.business ? 'student' : 'business'} account'),
+                            onPressed: () {
+                              Navigator.of(context).pushNamed('/switch', arguments: user.business);
+                            },
+                          ),
+                        FutureBuilder(
+                            future:
+                                fetchUser(FirebaseAuth.instance.currentUser.uid),
+                            builder: (context, snapshot) {
+                              if (snapshot.hasError) {
+                                return Container();
                               }
-                            }
-                            return Container();
-                          })
-                    ],
+                              if (snapshot.hasData) {
+                                if (snapshot.data.admin) {
+                                  return TextButton(
+                                    child: Text('Reports page'),
+                                    onPressed: () {
+                                      Navigator.of(context).pushNamed('/reports');
+                                    },
+                                  );
+                                }
+                              }
+                              return Container();
+                            })
+                      ],
+                    ),
                   ),
                   Spacer(),
-                  Row(
-                    children: [
-                      TextButton(
-                        onPressed: () async {
-                          await Authentication.signOut(context: context);
-                          Navigator.of(context).pushReplacementNamed('/auth');
-                        },
-                        child: Text('Logout'),
-                      ),
-                      TextButton(
-                          onPressed: () {
-                            var darkThemeProvider =
-                                Provider.of<DarkThemeProvider>(context,
-                                    listen: false);
-                            darkThemeProvider.darkTheme =
-                                !darkThemeProvider.darkTheme;
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 10),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        TextButton(
+                          onPressed: () async {
+                            await Authentication.signOut(context: context);
+                            Navigator.of(context).pushReplacementNamed('/auth');
                           },
-                          child: Text('theme'))
-                    ],
+                          child: Text('Logout'),
+                        ),
+                        Row(
+                          children: [
+
+                            Switch(value: Provider.of<DarkThemeProvider>(context,
+                                listen: false).darkTheme, onChanged: (bool value) {
+                              var darkThemeProvider =
+                              Provider.of<DarkThemeProvider>(context,
+                                  listen: false);
+                              darkThemeProvider.darkTheme =
+                                  value;
+                            }),
+                            Icon(Provider.of<DarkThemeProvider>(context,
+                                listen: false).darkTheme?Icons.dark_mode:Icons.light_mode),
+                          ],
+                        ),
+                      ],
+                    ),
                   )
                 ],
               ),

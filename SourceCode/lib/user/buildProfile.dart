@@ -42,6 +42,7 @@ class _BuildProfileState extends State<BuildProfile> {
                         FirebaseAuth.instance.currentUser.uid,
                         'department',
                         folder.path);
+                    await addToObject(Collections.users, FirebaseAuth.instance.currentUser.uid, 'following', folder.path);
                     await updateObject(
                         Collections.users,
                         FirebaseAuth.instance.currentUser.uid,

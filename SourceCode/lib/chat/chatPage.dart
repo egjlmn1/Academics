@@ -54,7 +54,7 @@ class _ChatPageState extends State<ChatPage> {
                     stream: FirebaseFirestore.instance
                         .collection(Collections.chat)
                         .doc(widget.chatId)
-                        .collection('messages')
+                        .collection(Collections.messages)
                         .orderBy('timestamp', descending: true)
                         .limit(_limit)
                         .snapshots(),
@@ -256,7 +256,7 @@ void sendChatMessage(String content, int type, String chatId) {
         'type': type
       },
       doc: chatId,
-      subCollection: 'messages');
+      subCollection: Collections.messages);
   FirebaseFirestore.instance
       .collection(Collections.chat)
       .doc(chatId)

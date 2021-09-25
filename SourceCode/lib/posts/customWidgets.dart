@@ -54,7 +54,7 @@ class _PollWidgetState extends State<PollWidget> {
                     .addAll({FirebaseAuth.instance.currentUser.uid: index});
                 widget.poll.polls[List.from(widget.poll.polls.keys)[index]]++;
                 updateObject(
-                    'posts', widget.postId, 'typeData', widget.poll.toJson());
+                    Collections.posts, widget.postId, 'typeData', widget.poll.toJson());
               });
             },
             child: Container(
@@ -327,14 +327,14 @@ class _VotesStateState extends State<VotesState> {
     if (increase) {
       addToObject(Collections.users, FirebaseAuth.instance.currentUser.uid,
           'liked', widget.postId);
-      updateObject('posts', widget.postId, 'up_votes', FieldValue.increment(1));
+      updateObject(Collections.posts, widget.postId, 'up_votes', FieldValue.increment(1));
       updateObject(Collections.users, widget.postUser, 'points',
           FieldValue.increment(1));
     } else {
       removeFromObject(Collections.users, FirebaseAuth.instance.currentUser.uid,
           'liked', widget.postId);
       updateObject(
-          'posts', widget.postId, 'up_votes', FieldValue.increment(-1));
+          Collections.posts, widget.postId, 'up_votes', FieldValue.increment(-1));
       updateObject(Collections.users, widget.postUser, 'points',
           FieldValue.increment(-1));
     }
@@ -345,14 +345,14 @@ class _VotesStateState extends State<VotesState> {
       addToObject(Collections.users, FirebaseAuth.instance.currentUser.uid,
           'disliked', widget.postId);
       updateObject(
-          'posts', widget.postId, 'down_votes', FieldValue.increment(1));
+          Collections.posts, widget.postId, 'down_votes', FieldValue.increment(1));
       updateObject(Collections.users, widget.postUser, 'points',
           FieldValue.increment(-1));
     } else {
       removeFromObject(Collections.users, FirebaseAuth.instance.currentUser.uid,
           'disliked', widget.postId);
       updateObject(
-          'posts', widget.postId, 'down_votes', FieldValue.increment(-1));
+          Collections.posts, widget.postId, 'down_votes', FieldValue.increment(-1));
       updateObject(Collections.users, widget.postUser, 'points',
           FieldValue.increment(1));
     }
@@ -387,7 +387,7 @@ class _FollowWidgetState extends State<FollowWidget> {
                           widget.followers
                               .remove(FirebaseAuth.instance.currentUser.uid);
                           await removeFromObject(
-                              'posts',
+                              Collections.posts,
                               widget.postId,
                               'typeData.followers',
                               FirebaseAuth.instance.currentUser.uid);
@@ -395,7 +395,7 @@ class _FollowWidgetState extends State<FollowWidget> {
                           widget.followers
                               .add(FirebaseAuth.instance.currentUser.uid);
                           await addToObject(
-                              'posts',
+                              Collections.posts,
                               widget.postId,
                               'typeData.followers',
                               FirebaseAuth.instance.currentUser.uid);
@@ -430,9 +430,17 @@ class FileDownloadWidget extends StatelessWidget {
       color: Theme.of(context).cardColor,
       child: TextButton(
         onPressed: () async {
-          Navigator.of(context).pushNamed('/pdf',
-              arguments:
-                  await FirebaseStorage.instance.ref(fileId).getDownloadURL());
+          try {
+            String url =  await FirebaseStorage.instance.ref(fileId).getDownloadURL();
+            if (url != null) {
+              Navigator.of(context).pushNamed('/pdf',
+                  arguments:url);
+            } else {
+              showError('Could not open file', context);
+            }
+          } catch(e) {
+            showError('Could not open file', context);
+          }
         },
         child: Text('Open $type'),
       ),
@@ -701,8 +709,8 @@ class Comment extends StatelessWidget {
               context),
         ));
       } else if (choice == CommentActions.Delete.toString()) {
-        deleteObject('posts', commentId,
-            doc: postId, subCollection: 'comments');
+        deleteObject(Collections.posts, commentId,
+            doc: postId, subCollection: Collections.comments);
       } else {}
     };
   }
@@ -741,7 +749,7 @@ class Answer extends Comment {
         child: IconButton(
           onPressed: () {
             updateObject(
-                'posts', postId, 'typeData.accepted_answer', commentId);
+                Collections.posts, postId, 'typeData.accepted_answer', commentId);
             onClick(commentId);
             notifyFollower(
                 postFollowed: postId,
@@ -758,7 +766,7 @@ class Answer extends Comment {
         child: IconButton(
           onPressed: () {
             if (postUserId == FirebaseAuth.instance.currentUser.uid) {
-              updateObject('posts', postId, 'typeData.accepted_answer', null);
+              updateObject(Collections.posts, postId, 'typeData.accepted_answer', null);
               onClick(null);
             }
           },
@@ -809,7 +817,7 @@ class UploadComment extends StatelessWidget {
                   return;
                 }
                 uploadObject(
-                    'posts',
+                    Collections.posts,
                     {
                       'userid': FirebaseAuth.instance.currentUser.uid,
                       'username': username,
@@ -817,7 +825,7 @@ class UploadComment extends StatelessWidget {
                       'time': DateTime.now().millisecondsSinceEpoch,
                     },
                     doc: postId,
-                    subCollection: 'comments');
+                    subCollection: Collections.comments);
                 textController.clear();
                 scrollController.jumpTo(
                   scrollController.position.maxScrollExtent,
@@ -882,8 +890,8 @@ class _SendFilePostWidgetState extends State<SendFilePostWidget> {
     print('selected post: $_selectedPost');
     return Container(
       child: _selectedPost == null
-          ? TextButton(
-              child: Text('(Some good word like send) File'),
+          ? OutlinedButton(
+              child: Text('Send File'),
               onPressed: () {
                 showDialog(
                   context: context,
@@ -907,24 +915,28 @@ class _SendFilePostWidgetState extends State<SendFilePostWidget> {
                   ),
                 ),
                 Flexible(
-                  child: IconButton(
-                    icon: Icon(Icons.close),
-                    onPressed: () {
-                      setState(() {
-                        _selectedPost = null;
-                      });
-                    },
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: Icon(Icons.close),
+                        onPressed: () {
+                          setState(() {
+                            _selectedPost = null;
+                          });
+                        },
+                      ),
+                      Flexible(
+                        child: TextButton(
+                          child: Text('send'),
+                          onPressed: () async {
+                            showError('Sending post...', context);
+                            await sendFile();
+                          },
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                Flexible(
-                  child: TextButton(
-                    child: Text('send'),
-                    onPressed: () async {
-                      showError('Sending post...', context);
-                      await sendFile();
-                    },
-                  ),
-                )
               ],
             ),
       color: Theme.of(context).cardColor,
@@ -956,7 +968,7 @@ class _SendFilePostWidgetState extends State<SendFilePostWidget> {
 
   Widget _buildPickDialog(BuildContext context) {
     return AlertDialog(
-      title: const Text('(Some good word like send) File'),
+      title: const Text('Choose File'),
       //content: const Text('Choose where to upload the image from'),
       actions: <Widget>[
         TextButton(
@@ -979,7 +991,7 @@ class _SendFilePostWidgetState extends State<SendFilePostWidget> {
               _selectedPost = id;
             });
           },
-          child: const Text('(Some good word like send) Existing File Post'),
+          child: const Text('Pick existing file post'),
         ),
       ],
     );
@@ -1002,5 +1014,5 @@ Future<void> notifyFollower(
             post: postToSend),
         follower);
   }
-  return updateObject('posts', postFollowed, 'typeData.followers', []);
+  return updateObject(Collections.posts, postFollowed, 'typeData.followers', []);
 }

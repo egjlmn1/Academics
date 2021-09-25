@@ -56,7 +56,7 @@ class _ReportsPageState extends State<ReportsPage> {
                           TextButton(
                             child: Text('Fixed'),
                             onPressed: () async {
-                              await deleteObject('reports', reports[index].entries.first.key.id);
+                              await deleteObject(Collections.reports, reports[index].entries.first.key.id);
                               setState(() {
 
                               });

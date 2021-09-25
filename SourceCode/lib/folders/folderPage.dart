@@ -44,46 +44,75 @@ class _FolderPageState extends State<FolderPage> {
         .toList();
     return Column(
       children: [
-        Row(
-            children: List.generate(
-                paths.length,
-                (index) => Flexible(
-                      child: TextButton(
-                          onPressed: () {
-                            setState(() {
-                              _path = paths[index];
-                            });
-                          },
-                          child: Text(paths[index].split('/').last)),
-                    ))),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  _selectedPage = 0;
-                });
-              },
-              child: Text('Posts'),
-            ),
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  _selectedPage = 1;
-                });
-              },
-              child: Text('Folders'),
-            ),
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  _selectedPage = 2;
-                });
-              },
-              child: Text('My Folders'),
-            ),
-          ],
+        folderPickRow(paths, (String path) {
+          setState(() {
+            _path = path;
+          });
+        }),
+        Container(
+          color: Theme.of(context).primaryColor,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              TextButton(
+                onPressed: () {
+                  if (_selectedPage == 0) {
+                    return;
+                  }
+                  setState(() {
+                    _selectedPage = 0;
+                  });
+                },
+                child: Text(
+                  'Posts',
+                  style: TextStyle(
+                      decoration: (_selectedPage == 0)
+                          ? TextDecoration.underline
+                          : TextDecoration.none,
+                      color: Theme.of(context).accentColor,
+                      fontSize: 20),
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  if (_selectedPage == 1) {
+                    return;
+                  }
+                  setState(() {
+                    _selectedPage = 1;
+                  });
+                },
+                child: Text(
+                  'Folders',
+                  style: TextStyle(
+                      decoration: (_selectedPage == 1)
+                          ? TextDecoration.underline
+                          : TextDecoration.none,
+                      color: Theme.of(context).accentColor,
+                      fontSize: 20),
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  if (_selectedPage == 2) {
+                    return;
+                  }
+                  setState(() {
+                    _selectedPage = 2;
+                  });
+                },
+                child: Text(
+                  'My Folders',
+                  style: TextStyle(
+                      decoration: (_selectedPage == 2)
+                          ? TextDecoration.underline
+                          : TextDecoration.none,
+                      color: Theme.of(context).accentColor,
+                      fontSize: 20),
+                ),
+              ),
+            ],
+          ),
         ),
         if (_selectedPage == 0)
           Expanded(
@@ -102,14 +131,20 @@ class _FolderPageState extends State<FolderPage> {
                   padding: EdgeInsets.symmetric(horizontal: 20),
                   child: TextField(
                     controller: folderController,
-                    onChanged: (text) {print(text);setState(() {});},
+                    onChanged: (text) {
+                      print(text);
+                      setState(() {});
+                    },
                     decoration: InputDecoration(
                       hintText: 'folder name',
                     ),
                   ),
                 ),
                 Expanded(
-                    child: createFolderList(fetchSubFolders(_path, prefix: folderController.text.trim()), (Folder folder) {
+                    child: createFolderList(
+                        fetchSubFolders(_path,
+                            prefix: folderController.text.trim()),
+                        (Folder folder) {
                   setState(() {
                     _path = folder.path;
                     _selectedPage = 0;
@@ -143,11 +178,12 @@ class _FolderPageState extends State<FolderPage> {
           }
           return FutureBuilder(
             future: fetchInBatches(
-                'userFolders', List.from(snapshot.data.map((e) => e.path))),
+                Collections.userFolders, List.from(snapshot.data.map((e) => e.path))),
             builder: (context, snapshot) {
               if (snapshot.hasData) {
                 List<DocumentSnapshot> items = snapshot.data;
-                items.sort((a,b)=>a.get('path').toString().compareTo(b.get('path')));
+                items.sort((a, b) =>
+                    a.get('path').toString().compareTo(b.get('path')));
                 return ListView(
                   shrinkWrap: true,
                   children: List.generate(items.length, (index) {
@@ -166,7 +202,8 @@ class _FolderPageState extends State<FolderPage> {
                     ));
                   }),
                 );
-              } if (snapshot.hasError) {
+              }
+              if (snapshot.hasError) {
                 return errorWidget('Error fetching folders', context);
               }
               return Container();
@@ -186,7 +223,8 @@ class _FolderPageState extends State<FolderPage> {
       await addToObject(Collections.users, user.id, 'following', folder.path);
     } else {
       isFollowing = false;
-      await removeFromObject(Collections.users, user.id, 'following', folder.path);
+      await removeFromObject(
+          Collections.users, user.id, 'following', folder.path);
     }
   }
 }

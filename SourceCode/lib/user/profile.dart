@@ -55,65 +55,79 @@ class _ProfilePageState extends State<ProfilePage> {
           }
           return Column(
             children: [
+              if (snapshot.hasData)
+                Container(
+                  padding: EdgeInsets.symmetric(vertical: 20),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Icon(
+                        (user != null && user.business)
+                            ? Icons.business
+                            : Icons.person,
+                        size: 100,
+                      ),
+                      if (snapshot.hasError)
+                        errorWidget('Error user', context)
+                      else if (snapshot.hasData)
+                        _buildDisplay(snapshot.data)
+                    ],
+                  ),
+                ) else
+                  SizedBox(height: 140,),
               Container(
-                padding: EdgeInsets.symmetric(vertical: 20),
+                color: Theme.of(context).primaryColor,
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    Icon(
-                      (user != null && user.business)
-                          ? Icons.business
-                          : Icons.person,
-                      size: 100,
+                    TextButton(
+                      onPressed: () {
+                        if (_selectedPage == 0) {
+                          return;
+                        }
+                        setState(() {
+                          _selectedPage = 0;
+                        });
+                      },
+                      child: Text('Posts', style: TextStyle(
+                          decoration: (_selectedPage==0) ? TextDecoration.underline:TextDecoration.none,
+                          color: Theme.of(context).accentColor,
+                          fontSize: 20
+                      ),),
                     ),
-                    Column(
-                      children: [
-                        if (snapshot.hasError)
-                          errorWidget('Error user', context)
-                        else if (snapshot.hasData)
-                          _buildDisplay(snapshot.data)
-                      ],
-                    )
+                    TextButton(
+                      onPressed: () {
+                        if (_selectedPage == 1) {
+                          return;
+                        }
+                        setState(() {
+                          _selectedPage = 1;
+                        });
+                      },
+                      child: Text('Following', style: TextStyle(
+                          decoration: (_selectedPage==1) ? TextDecoration.underline:TextDecoration.none,
+                          color: Theme.of(context).accentColor,
+                          fontSize: 20
+                      ),),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        if (_selectedPage == 2) {
+                          return;
+                        }
+                        setState(() {
+                          _selectedPage = 2;
+                        });
+                      },
+                      child: Text('Information', style: TextStyle(
+                          decoration: (_selectedPage==2) ? TextDecoration.underline:TextDecoration.none,
+                          color: Theme.of(context).accentColor,
+                          fontSize: 20
+                      ),),
+                    ),
                   ],
                 ),
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  TextButton(
-                    child: Text('Posts'),
-                    onPressed: () {
-                      if (_selectedPage == 0) {
-                        return;
-                      }
-                      setState(() {
-                        _selectedPage = 0;
-                      });
-                    },
-                  ),
-                  TextButton(
-                    child: Text('Following'),
-                    onPressed: () {
-                      if (_selectedPage == 1) {
-                        return;
-                      }
-                      setState(() {
-                        _selectedPage = 1;
-                      });
-                    },
-                  ),
-                  TextButton(
-                    child: Text('Information'),
-                    onPressed: () {
-                      if (_selectedPage == 2) {
-                        return;
-                      }
-                      setState(() {
-                        _selectedPage = 2;
-                      });
-                    },
-                  )
-                ],
               ),
               if (!snapshot.hasError && snapshot.hasData)
                 createPage(snapshot.data),
@@ -156,15 +170,21 @@ class _ProfilePageState extends State<ProfilePage> {
     return null;
   }
 
+
+  //
+  // 2ooZQkxb23a1UfSmrjB0
+  // C3I3CS8aGWi7B3ZYOCbZ
+  // Wsb1sovWo8ZcZWItA3fp
+
+
   Widget startChat() {
-    Future<String> didChat = alreadyChatted();
     return TextButton(
       child: Text('Start a chat',
           style: TextStyle(
             fontSize: 30,
           )),
       onPressed: () async {
-        String chatId = await didChat;
+        String chatId = await alreadyChatted();
         String docId;
         if (chatId != null) {
           docId = chatId;
@@ -173,19 +193,6 @@ class _ProfilePageState extends State<ProfilePage> {
         }
         Navigator.of(context).pushNamed('/chat', arguments: docId);
       },
-    );
-  }
-
-  Widget completeProfile() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: [
-        Text('Your profile is 20% done'),
-        TextButton(
-          child: Text('continue'),
-          onPressed: () {},
-        )
-      ],
     );
   }
 
@@ -213,21 +220,41 @@ class _ProfilePageState extends State<ProfilePage> {
               }));
     } else {
       // information
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Name: ${user.displayName}'),
-          if (_userid == FirebaseAuth.instance.currentUser.uid)
-            Row(
-              children: [
-                Text('Email: ${user.email}'),
-                ShowUserEmail(_userid, (user.showEmail)),
-              ],
-            )
-          else if (user.showEmail)
-            Text('Email: ${user.email}'),
-          if (user.department != null) Text(user.department)
-        ],
+      return Container(
+        padding: EdgeInsets.symmetric(horizontal: 5),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text('Name: ${user.displayName}'),
+            ),
+            if (_userid == FirebaseAuth.instance.currentUser.uid)
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  children: [
+                    Text('Email: ${user.email}'),
+                    ShowUserEmail(_userid, (user.showEmail)),
+                  ],
+                ),
+              )
+            else if (user.showEmail)
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text('Email: ${user.email}'),
+              ),
+            if (user.department != null) Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text('Department: ${user.department.split('/').last}'),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text('Credits: ${user.points}'),
+            ),
+          ],
+        ),
       );
     }
   }

@@ -11,6 +11,7 @@ import 'package:academics/upload/choosePost.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/services.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -43,7 +44,7 @@ Future<String> fetchRoute() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   if (FirebaseAuth.instance.currentUser != null) {
-    print(FirebaseAuth.instance.currentUser.uid);
+    print('Current user: ${FirebaseAuth.instance.currentUser.uid}');
     DocumentSnapshot user = (await getDocSnapshot(
         Collections.users, FirebaseAuth.instance.currentUser.uid));
     if (!user.exists) {
@@ -106,6 +107,9 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+    ]);
     return FutureBuilder(
       future: fetchRoute(),
       builder: (context, snapshot) {

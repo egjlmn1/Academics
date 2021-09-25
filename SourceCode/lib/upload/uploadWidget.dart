@@ -338,43 +338,53 @@ class ChoicesUploadWidget extends _UploadWidgetState {
 
   @override
   Widget build(BuildContext context) { //TODO fix colors and position of text field
-    return Container(
-      height: 30,
-      child: ListView(
-        shrinkWrap: true,
-        scrollDirection: Axis.horizontal,
+    return Column(
+      children: [
+        Container(
+          height: 30,
+          child: ListView(
+            shrinkWrap: true,
+            scrollDirection: Axis.horizontal,
 
-        children: [
-          for (int i=0;i<choices.length;i++)
-            OutlinedButton(
-              style: ButtonStyle(
-                backgroundColor: (chosen != null && i==chosen) ?
-                MaterialStateProperty.all(Theme.of(context).hintColor) : MaterialStateProperty.all(Theme.of(context).cardColor),
+            children: [
+              for (int i=0;i<choices.length;i++)
+                OutlinedButton(
+                  style: ButtonStyle(
+                    backgroundColor: (chosen != null && i==chosen) ?
+                    MaterialStateProperty.all(Theme.of(context).primaryColor) : MaterialStateProperty.all(Theme.of(context).cardColor),
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      chosen = i;
+                    });
+                  },
+                  child: Text(choices[i], style: Theme.of(context).textTheme.subtitle2,),
+                ),
+            ],
+          ),
+        ),
+        if (other)
+          Container(
+            width: 150,
+            margin: EdgeInsets.symmetric(vertical: 10),
+            child: TextField(
+              decoration: InputDecoration(
+                hintText: 'other type',
+                filled: true,
+                fillColor: (chosen != null && choices.length==chosen) ?
+                Theme.of(context).primaryColor : Theme.of(context).cardColor,
               ),
-              onPressed: () {
+              controller: _otherController,
+              maxLength: 64,
+              onTap: () {
+                print('tap');
                 setState(() {
-                  chosen = i;
+                  chosen = choices.length;
                 });
               },
-              child: Text(choices[i]),
             ),
-          if (other)
-            Container(
-              color: (chosen != null && chosen==choices.length) ?
-              Theme.of(context).hintColor : Theme.of(context).cardColor,
-              width: 100,
-              child: TextField(
-                controller: _otherController,
-                maxLength: 64,
-                onTap: () {
-                  setState(() {
-                    chosen = choices.length;
-                  });
-                },
-              ),
-            )
-        ],
-      ),
+          ),
+      ],
     );
   }
 

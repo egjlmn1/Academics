@@ -28,7 +28,7 @@ class SwitchToBusiness extends StatelessWidget {
                         ? 'Display Name'
                         : 'Business Name',
                   )),
-              TextButton(
+              OutlinedButton(
                 child: Text(isBusiness
                     ? 'Switch to Student Account'
                     : 'Switch to Business Account'),

@@ -44,7 +44,7 @@ class _ChooseFolderState extends State<ChooseFolder> {
 
   Future<List<String>> loadPreviousFolders() async {
     final prefs = await SharedPreferences.getInstance();
-    List folders = prefs.getStringList('previousFolders') ?? [];
+    List<String> folders = prefs.getStringList('previousFolders') ?? [];
     if (folders.contains('root')) {
       folders.remove('root');
     }
@@ -95,9 +95,10 @@ class _ChooseFolderState extends State<ChooseFolder> {
                         mainAxisAlignment: MainAxisAlignment.start,
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Text(selectedFolders[index]),
+                          Text((selectedFolders[index] =='root')?'/':selectedFolders[index]),
                           if (index > 0)
                             IconButton(
+                                padding: EdgeInsets.zero,
                                 icon: Icon(Icons.close),
                                 onPressed: (() {
                                   setState(() {

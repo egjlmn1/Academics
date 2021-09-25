@@ -37,10 +37,17 @@ class PostCreator {
                 _createTopBar(),
                 for (var widget
                     in post.typeData.buildFullPost(context, post.id))
-                  widget,
+                  Container(
+                    color: Theme.of(context).cardColor,
+                    padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                    child: widget,
+                  ),
                 _createBottomBar(),
                 for (var widget in post.typeData.buildExtra(context, post.id))
-                  widget,
+                  Container(
+                      color: Theme.of(context).cardColor,
+                      padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                      child: widget),
               ]),
             ),
           ),
@@ -148,8 +155,14 @@ class PostCreator {
         if ((post.type != PostType.Poll) && (post.type != PostType.Request))
           Row(
             children: [
-              Text((post.upVotes - post.downVotes).toString(), style: Theme.of(context).textTheme.bodyText2,),
-              Icon(Icons.arrow_drop_up, color: Theme.of(context).accentColor,),
+              Text(
+                (post.upVotes - post.downVotes).toString(),
+                style: Theme.of(context).textTheme.bodyText2,
+              ),
+              Icon(
+                Icons.arrow_drop_up,
+                color: Theme.of(context).accentColor,
+              ),
             ],
           ),
       ],
@@ -198,7 +211,8 @@ class PostCreator {
             child: TextButton(
               child: _buildPostTimeUser(hint: false),
               onPressed: () {
-                Navigator.of(context).pushNamed('/user_profile', arguments: post.userid);
+                Navigator.of(context)
+                    .pushNamed('/user_profile', arguments: post.userid);
               },
             ),
           ),
@@ -275,16 +289,20 @@ class PostCreator {
       _savePost();
     } else if (choice == PostActions.Delete.toString()) {
       deletePost();
-    }else if (choice == PostActions.Share.toString()) {
+    } else if (choice == PostActions.Share.toString()) {
       _sharePost();
     } else if (choice == PostActions.Move.toString()) {
       _movePost();
     } else if (choice == PostActions.Report.toString()) {
       sendReport(Report(
         post: {
-            'post': post.id,
-          },
-          reason: await getReportReason([ReportReason.postInappropriate, ReportReason.postSpam, ReportReason.postWrongFolder], context),
+          'post': post.id,
+        },
+        reason: await getReportReason([
+          ReportReason.postInappropriate,
+          ReportReason.postSpam,
+          ReportReason.postWrongFolder
+        ], context),
       ));
     }
   }
@@ -292,9 +310,14 @@ class PostCreator {
   void _sharePost() async {
     try {
       //AcademicsUser user = await fetchUser(FirebaseAuth.instance.currentUser.uid);
-      List<String> chatsIds = List.from((await getDocs(Collections.users, doc: FirebaseAuth.instance.currentUser.uid,subCollection: Collections.chat)).map((e) => e.id));
-      List<DocumentSnapshot> chats = await fetchInBatches(Collections.chat, chatsIds);
-      List<String> names = await Future.wait(List<Future<String>>.from(chats.map((e) => chatName(e))));
+      List<String> chatsIds = List.from((await getDocs(Collections.users,
+              doc: FirebaseAuth.instance.currentUser.uid,
+              subCollection: Collections.chat))
+          .map((e) => e.id));
+      List<DocumentSnapshot> chats =
+          await fetchInBatches(Collections.chat, chatsIds);
+      List<String> names = await Future.wait(
+          List<Future<String>>.from(chats.map((e) => chatName(e))));
       String chatId = await showDialog(
           context: context,
           builder: (context) {
@@ -309,7 +332,9 @@ class PostCreator {
                     return TextButton(
                       child: Row(
                         children: [
-                          Icon((chats[index].get('name') != null) ? Icons.group: Icons.person),
+                          Icon((chats[index].get('name') != null)
+                              ? Icons.group
+                              : Icons.person),
                           Text(names[index]),
                         ],
                       ),
@@ -323,14 +348,15 @@ class PostCreator {
             );
           });
       sendChatMessage(post.id, 1, chatId);
-    } catch(e) {
+    } catch (e) {
       print('sharePost $e');
     }
   }
 
   void _movePost() async {
-    final path = await Navigator.of(context).pushNamed('/choose_folder', arguments: post.folder);
-    updateObject('posts', post.id, 'folder', path);
+    final path = await Navigator.of(context)
+        .pushNamed('/choose_folder', arguments: post.folder);
+    updateObject(Collections.posts, post.id, 'folder', path);
     _deleteFromFolder();
     await addToFolder(post.id, path);
   }
@@ -344,16 +370,16 @@ class PostCreator {
       _deleteFromFolder(),
       removeFromObject(Collections.users, post.userid, 'posts', post.id),
       _deleteComments(),
-      deleteObject('posts', post.id)
+      deleteObject(Collections.posts, post.id)
     ]);
     Navigator.of(context).pushNamedAndRemoveUntil('/home', (r) => false);
   }
 
   Future<void> _deleteComments() async {
     return FirebaseFirestore.instance
-        .collection('posts')
+        .collection(Collections.posts)
         .doc(post.id)
-        .collection('comments')
+        .collection(Collections.comments)
         .get()
         .then((snapshot) {
       for (DocumentSnapshot ds in snapshot.docs) {
@@ -364,13 +390,13 @@ class PostCreator {
 
   Future<void> _deleteFromFolder() async {
     try {
-      String folderId = await findDocId('folders', 'path', post.folder);
+      String folderId = await findDocId(Collections.folders, 'path', post.folder);
       deleteObject(
-          'folders',
-          (await findDocId('folders', 'id', post.id,
-              doc: folderId, subCollection: 'posts')),
+          Collections.folders,
+          (await findDocId(Collections.folders, 'id', post.id,
+              doc: folderId, subCollection: Collections.posts)),
           doc: folderId,
-          subCollection: 'posts');
+          subCollection: Collections.posts);
     } catch (e) {
       print('error in deleting from folder: $e');
     }

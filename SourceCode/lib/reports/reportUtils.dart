@@ -4,16 +4,16 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../cloudUtils.dart';
 
 Future<void> sendReport(Report report) async {
-  List<DocumentSnapshot> docs = (await FirebaseFirestore.instance.collection('reports').where('post', isEqualTo: report.post).where('reason', isEqualTo: report.reason).get()).docs;
+  List<DocumentSnapshot> docs = (await FirebaseFirestore.instance.collection(Collections.reports).where('post', isEqualTo: report.post).where('reason', isEqualTo: report.reason).get()).docs;
   if (docs.isEmpty) {
-    return uploadObject('reports', report.toJson());
+    return uploadObject(Collections.reports, report.toJson());
   } else {
-    return updateObject('reports', docs[0].id, 'amount', FieldValue.increment(1));
+    return updateObject(Collections.reports, docs[0].id, 'amount', FieldValue.increment(1));
   }
 }
 
 Future<List<Report>> getReports() async {
-  List<DocumentSnapshot> docs = await getDocs('reports');
+  List<DocumentSnapshot> docs = await getDocs(Collections.reports);
   return List<Report>.from(docs.map((doc) => decodeReport(doc)));
 }
 
