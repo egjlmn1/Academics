@@ -5,17 +5,22 @@ import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
+class FetchConstant {
+  static const int fetchPostsLimit = 100;
+  static const int fetchChatLimit = 100;
+
+}
 
 class Collections {
-  static String users = 'users';
-  static String chat = 'chats';
-  static String inbox = 'inbox';
-  static String folders = 'folders';
-  static String userFolders = 'userFolders';
-  static String reports = 'reports';
-  static String posts = 'posts';
-  static String messages = 'messages';
-  static String comments = 'comments';
+  static const String users = 'users';
+  static const String chat = 'chats';
+  static const String inbox = 'inbox';
+  static const String folders = 'folders';
+  static const String userFolders = 'userFolders';
+  static const String reports = 'reports';
+  static const String posts = 'posts';
+  static const String messages = 'messages';
+  static const String comments = 'comments';
 }
 
 Future<String> uploadFile(File _file, String path) async {

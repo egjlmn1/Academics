@@ -1,5 +1,5 @@
 import 'package:academics/posts/postBuilder.dart';
-import 'package:academics/posts/postUtils.dart';
+import 'package:academics/posts/postCloudUtils.dart';
 import 'package:flutter/material.dart';
 
 class SinglePostPage extends StatefulWidget {
@@ -17,7 +17,6 @@ class _SinglePostPageState extends State<SinglePostPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        //backgroundColor: Theme.of(context).cardColor,
         foregroundColor: Theme.of(context).accentColor,
       ),
       body: SafeArea(
@@ -25,10 +24,10 @@ class _SinglePostPageState extends State<SinglePostPage> {
           future: fetchPost(widget.postId),
           builder: (context, snapshot) {
             if (snapshot.hasData) {
-              return PostCreator(post: snapshot.data, context: context).buildFullPost();
+              return PostBuilder(post: snapshot.data, context: context).buildFullPost();
             }
             if (snapshot.hasError) {
-              return PostCreator(post: snapshot.data, context: context).buildFullPost();
+              return PostBuilder(post: snapshot.data, context: context).buildFullPost();
             }
             return Container();
           },

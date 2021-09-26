@@ -1,12 +1,11 @@
 import 'package:academics/errors.dart';
-import 'package:academics/posts/postUtils.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:academics/folders/viewModel.dart';
+import 'package:academics/posts/postBuilder.dart';
+import 'package:academics/user/model.dart';
+import 'package:academics/user/userUtils.dart';
 import 'package:flutter/material.dart';
 
-import '../cloudUtils.dart';
 import 'folders.dart';
-import 'foldersUtil.dart';
 
 class UploadToFolders extends StatefulWidget {
   final String postId;
@@ -18,26 +17,25 @@ class UploadToFolders extends StatefulWidget {
 }
 
 class _UploadToFoldersState extends State<UploadToFolders> {
+  UserFoldersViewModel viewModel;
+
+  @override
+  void initState() {
+    super.initState();
+    viewModel = UserFoldersViewModel();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
         child: FutureBuilder(
-      future: getUserFolders(),
+      future: viewModel.folders,
       builder: (context, snapshot) {
         if (snapshot.hasData) {
           if (snapshot.data.isEmpty) {
             return _createFolders([]);
           }
-          return FutureBuilder(
-            future: fetchInBatches(
-                Collections.userFolders, List.from(snapshot.data.map((e) => e.path))),
-            builder: (context, snapshot) {
-              if (snapshot.hasData) {
-                return _createFolders(snapshot.data);
-              }
-              return _createFolders([]);
-            },
-          );
+          return errorWidget('No folders', context);
         }
         if (snapshot.hasError) {
           return errorWidget('Error fetching folders', context);
@@ -47,21 +45,14 @@ class _UploadToFoldersState extends State<UploadToFolders> {
     ));
   }
 
-  Widget _createFolders(List<DocumentSnapshot> items) {
-    items.sort((a, b) => a.get('path').toString().compareTo(b.get('path')));
+  Widget _createFolders(List<Map<String, dynamic>> items) {
+    items.sort((a, b) => a['path'].compareTo(b['path']));
 
     var buttons = List.generate(items.length, (index) {
-      Folder folder = Folder(
-          path: items[index].get('path').toString(), type: FolderType.user);
+      Folder folder = Folder(path: items[index]['path'], type: FolderType.user);
       return TextButton(
         onPressed: () async {
-          await uploadObject(
-              Collections.userFolders,
-              {
-                'id': widget.postId,
-              },
-              doc: items[index].id,
-              subCollection: Collections.posts);
+          await viewModel.uploadPost(items[index]['id'], widget.postId);
           Navigator.of(context).pop();
         },
         child: Center(
@@ -102,12 +93,7 @@ class _UploadToFoldersState extends State<UploadToFolders> {
       onPressed: () async {
         String path = await askForFolderName(context);
         if (path != null) {
-          String id = await uploadObject(Collections.userFolders, {
-            'path': path,
-            'owner': FirebaseAuth.instance.currentUser.uid,
-          });
-          await addToObject(
-              Collections.users, FirebaseAuth.instance.currentUser.uid, 'folders', id);
+          await viewModel.createFolder(path);
           setState(() {});
         }
       },
@@ -159,14 +145,14 @@ class _UploadToFoldersState extends State<UploadToFolders> {
             ],
           );
         });
-    return controller.text.trim().isEmpty? null:controller.text.trim();
+    return controller.text.trim().isEmpty ? null : controller.text.trim();
   }
 }
 
 class UserFoldersPage extends StatelessWidget {
-  final String folderId;
+  final SingleUserFolderViewModel viewModel;
 
-  const UserFoldersPage({Key key, this.folderId}) : super(key: key);
+  const UserFoldersPage(this.viewModel);
 
   @override
   Widget build(BuildContext context) {
@@ -176,16 +162,19 @@ class UserFoldersPage extends StatelessWidget {
           IconButton(
             icon: Icon(Icons.share),
             onPressed: () async {
-              addToObject(
-                  Collections.users, await searchUser(context), 'folders', folderId);
+              String user = await searchUser(context);
+              if (user != null) {
+                viewModel.shareToUser(user);
+              }
             },
           )
         ],
       ),
       body: Container(
-        child: createPostPage(
-            fetchPosts(folder: Folder(path: folderId, type: FolderType.user)),
-            context),
+        child: PostListBuilder(
+                posts: viewModel.posts,
+                context: context)
+            .buildPostPage(),
       ),
     );
   }
@@ -198,34 +187,19 @@ class UserFoldersPage extends StatelessWidget {
             title: Text('Search student'),
             content: SearchUser(
                 users: getKnownUsers(),
-                onUserClick: (DocumentSnapshot user) {
+                onUserClick: (AcademicsUser user) {
                   Navigator.of(context).pop(user.id);
                 },
-                removeUsersCondition: (DocumentSnapshot user) {
-                  return List<String>.from(user.get('folders'))
-                      .contains(folderId);
+                removeUsersCondition: (AcademicsUser user) {
+                  return List<String>.from(user.folders).contains(viewModel.folderId);
                 }),
           );
         });
   }
 }
 
-Future<List<DocumentSnapshot>> getKnownUsers() async {
-  List<DocumentSnapshot> chatsIds = await getDocs(Collections.users,
-      doc: FirebaseAuth.instance.currentUser.uid, subCollection: Collections.chat);
-  List<DocumentSnapshot> chats =
-      await fetchInBatches(Collections.chat, List.from(chatsIds.map((e) => e.id)));
-  Set<String> usersId =
-      Set.from(chats.map((e) => e.get('users')).expand((pair) => pair));
-  usersId.remove(FirebaseAuth.instance.currentUser.uid);
-
-  Future<List<DocumentSnapshot>> users =
-      fetchInBatches(Collections.users, usersId.toList());
-  return users;
-}
-
 class SearchUser extends StatefulWidget {
-  final Future<List<DocumentSnapshot>> users;
+  final Future<List<AcademicsUser>> users;
   final Function onUserClick;
   final Function removeUsersCondition;
 
@@ -265,14 +239,12 @@ class _SearchUserState extends State<SearchUser> {
             future: widget.users,
             builder: (context, snapshot) {
               if (snapshot.hasData) {
-                List<DocumentSnapshot> users = snapshot.data;
-                users = List.from(users.where((element) => ((element
-                        .get('display_name')
+                List<AcademicsUser> users = snapshot.data;
+                users = List.from(users.where((element) => ((element.displayName
                         .toString()
                         .toLowerCase()
                         .startsWith(_searchPrefix.toLowerCase())) ||
-                    (element
-                        .get('email')
+                    (element.email
                         .toString()
                         .toLowerCase()
                         .startsWith(_searchPrefix.toLowerCase())))));
@@ -289,7 +261,9 @@ class _SearchUserState extends State<SearchUser> {
                   },
                 );
               }
-              if (snapshot.hasError) {}
+              if (snapshot.hasError) {
+                return errorWidget('Error fetching users', context);
+              }
               return Container();
             },
           ),
@@ -298,7 +272,7 @@ class _SearchUserState extends State<SearchUser> {
     ]);
   }
 
-  Widget buildItem(DocumentSnapshot user) {
+  Widget buildItem(AcademicsUser user) {
     return TextButton(
       child: Row(
         children: [
@@ -311,15 +285,15 @@ class _SearchUserState extends State<SearchUser> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  user.get('display_name'),
+                  user.displayName,
                   style: TextStyle(
                       color: Theme.of(context).accentColor, fontSize: 15),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                if (user.get('show_email'))
+                if (user.showEmail)
                   Text(
-                    user.get('email'),
+                    user.email,
                     style: TextStyle(
                         color: Theme.of(context).accentColor, fontSize: 10),
                     maxLines: 1,

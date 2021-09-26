@@ -1,13 +1,11 @@
-import 'package:academics/chat/chatUtils.dart';
-import 'package:academics/posts/postUtils.dart';
-import 'package:academics/user/user.dart';
-import 'package:academics/user/userUtils.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:academics/posts/postBuilder.dart';
+import 'package:academics/user/model.dart';
+import 'package:academics/user/viewModel.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import '../cloudUtils.dart';
 import '../errors.dart';
 import '../folders/folders.dart';
+import '../routes.dart';
 
 class UserProfile extends StatelessWidget {
   final String id;
@@ -33,20 +31,21 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  String _userid;
   var _selectedPage = 0;
   AcademicsUser user;
+
+  UserViewModel viewModel;
 
   @override
   void initState() {
     super.initState();
-    _userid = widget.id;
+    viewModel = UserViewModel(widget.id);
   }
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
-        future: fetchUser(_userid),
+        future: viewModel.user,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             user = null;
@@ -145,37 +144,13 @@ class _ProfilePageState extends State<ProfilePage> {
             fontSize: 30,
           ),
         ),
-        if (FirebaseAuth.instance.currentUser.uid == _userid)
+        if (FirebaseAuth.instance.currentUser.uid == viewModel.userId)
           Container()
         else
           startChat()
       ],
     );
   }
-
-  Future<String> alreadyChatted() async {
-    for (String chatId in (await FirebaseFirestore.instance
-            .collection(Collections.users)
-            .doc(FirebaseAuth.instance.currentUser.uid)
-            .collection(Collections.chat)
-            .get())
-        .docs
-        .map((e) => e.id)) {
-      List<String> users =
-          List.from((await getDocSnapshot(Collections.chat, chatId)).get('users'));
-      if (users.contains(_userid)) {
-        return chatId;
-      }
-    }
-    return null;
-  }
-
-
-  //
-  // 2ooZQkxb23a1UfSmrjB0
-  // C3I3CS8aGWi7B3ZYOCbZ
-  // Wsb1sovWo8ZcZWItA3fp
-
 
   Widget startChat() {
     return TextButton(
@@ -184,14 +159,14 @@ class _ProfilePageState extends State<ProfilePage> {
             fontSize: 30,
           )),
       onPressed: () async {
-        String chatId = await alreadyChatted();
+        String chatId = await viewModel.alreadyChatted();
         String docId;
         if (chatId != null) {
           docId = chatId;
         } else {
-          docId = await createChat([_userid, FirebaseAuth.instance.currentUser.uid]);
+          docId = await viewModel.createChat([viewModel.userId, FirebaseAuth.instance.currentUser.uid]);
         }
-        Navigator.of(context).pushNamed('/chat', arguments: docId);
+        Navigator.of(context).pushNamed(Routes.chat, arguments: docId);
       },
     );
   }
@@ -202,7 +177,7 @@ class _ProfilePageState extends State<ProfilePage> {
       return Expanded(
         child: RefreshIndicator(
             onRefresh: _refreshData,
-            child: createPostPage(fetchPosts(user: user.id), context)),
+            child: PostListBuilder(posts: viewModel.getPosts(), context: context).buildPostPage()),
       );
     } else if (_selectedPage == 1) {
       // following
@@ -213,7 +188,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 return TextButton(
                     onPressed: () {
                       Navigator.of(context).pushNamedAndRemoveUntil(
-                          '/home', (r) => false,
+                          Routes.home, (r) => false,
                           arguments: {'folder': user.following[index]});
                     },
                     child: Folder(path: user.following[index]).build());
@@ -230,13 +205,13 @@ class _ProfilePageState extends State<ProfilePage> {
               padding: const EdgeInsets.all(8.0),
               child: Text('Name: ${user.displayName}'),
             ),
-            if (_userid == FirebaseAuth.instance.currentUser.uid)
+            if (viewModel.userId == FirebaseAuth.instance.currentUser.uid)
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Row(
                   children: [
                     Text('Email: ${user.email}'),
-                    ShowUserEmail(_userid, (user.showEmail)),
+                    ShowUserEmail(viewModel, (user.showEmail)),
                   ],
                 ),
               )
@@ -266,10 +241,10 @@ class _ProfilePageState extends State<ProfilePage> {
 }
 
 class ShowUserEmail extends StatefulWidget {
-  final String id;
+  final UserViewModel viewModel;
   final bool show;
 
-  ShowUserEmail(this.id, this.show);
+  ShowUserEmail(this.viewModel, this.show);
 
   @override
   _ShowUserEmailState createState() => _ShowUserEmailState();
@@ -290,7 +265,7 @@ class _ShowUserEmailState extends State<ShowUserEmail> {
       onPressed: () {
         setState(() {
           show = !show;
-          updateObject(Collections.users, widget.id, 'show_email', show);
+          widget.viewModel.showEmail(show);
         });
       },
       child: Text((show) ? 'Hide' : 'Show'),

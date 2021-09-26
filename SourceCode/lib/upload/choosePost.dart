@@ -1,6 +1,6 @@
 import 'package:academics/posts/postBuilder.dart';
-import 'package:academics/posts/postUtils.dart';
-import 'package:academics/posts/schemes.dart';
+import 'package:academics/posts/postCloudUtils.dart';
+import 'package:academics/posts/model.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -107,7 +107,7 @@ class _ChoosePostListState extends State<ChoosePostList> {
                               : Theme.of(context).cardColor),
                     ),
                     child:
-                        PostCreator(post: widget.posts[index], context: context)
+                        PostBuilder(post: widget.posts[index], context: context)
                             .buildHintPost(),
                   );
                 }),

@@ -1,14 +1,15 @@
 import 'package:academics/errors.dart';
 import 'package:academics/folders/userFolders.dart';
-import 'package:academics/posts/postUtils.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:academics/user/model.dart';
+import 'package:academics/user/userUtils.dart';
+import 'package:academics/user/viewModel.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import '../cloudUtils.dart';
-import 'chatPage.dart';
+import '../routes.dart';
+import '../utils.dart';
 import 'chatUtils.dart';
+import 'model.dart';
 
 class ChatListPage extends StatefulWidget {
   @override
@@ -18,14 +19,20 @@ class ChatListPage extends StatefulWidget {
 }
 
 class ChatListPageState extends State<ChatListPage> {
+
+  UserViewModel viewModel;
+
+  @override
+  void initState() {
+    super.initState();
+    viewModel = UserViewModel(FirebaseAuth.instance.currentUser.uid);
+
+  }
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder(
-      stream: FirebaseFirestore.instance
-          .collection(Collections.users)
-          .doc(FirebaseAuth.instance.currentUser.uid)
-          .collection(Collections.chat)
-          .snapshots(),
+      stream: viewModel.userChatsStream,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return errorWidget('Error loading chats', context);
@@ -45,14 +52,11 @@ class ChatListPageState extends State<ChatListPage> {
             ));
           }
           return StreamBuilder(
-              stream: FirebaseFirestore.instance
-                  .collection(Collections.chat)
-                  .where(FieldPath.documentId, whereIn: ids)
-                  .snapshots(),
+              stream: viewModel.realChatsStream(ids),
               builder: (context, snapshot) {
                 if (snapshot.hasData) {
-                  List listMessage = snapshot.data.docs;
-                  listMessage.sort((a,b)=> b.get('time').compareTo(a.get('time')));
+                  List<Chat> listMessage = snapshot.data;
+                  listMessage.sort((a,b)=> b.time.compareTo(a.time));
                   return ListView.builder(
                     padding: EdgeInsets.all(10.0),
                     itemBuilder: (context, index) {
@@ -119,11 +123,10 @@ class ChatListPageState extends State<ChatListPage> {
 
   Future<void> createGroupChat(List<String> users, String groupName) async {
     users.add(FirebaseAuth.instance.currentUser.uid);
-    await createChat(users, name: groupName);
+    await viewModel.createChat(users, name: groupName);
   }
 
-  Widget buildItem(int index, DocumentSnapshot doc) {
-    Map<String, dynamic> item = doc.data();
+  Widget buildItem(int index, Chat chat) {
     return OutlinedButton(
       child: new Column(
         children: <Widget>[
@@ -134,9 +137,9 @@ class ChatListPageState extends State<ChatListPage> {
             title: new Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
-                getUsername(doc),
+                getUsername(chat),
                 Text(
-                  timeToText(item['time']),
+                  timeToText(chat.time),
                   style: new TextStyle(color: Colors.grey, fontSize: 14.0),
                 ),
               ],
@@ -144,7 +147,7 @@ class ChatListPageState extends State<ChatListPage> {
             subtitle: new Container(
               padding: const EdgeInsets.only(top: 5.0),
               child: new Text(
-                item['message'],
+                chat.lastMessage,
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
                 style: new TextStyle(color: Colors.grey, fontSize: 15.0),
@@ -154,12 +157,12 @@ class ChatListPageState extends State<ChatListPage> {
         ],
       ),
       onPressed: () {
-        Navigator.of(context).pushNamed('/chat', arguments: doc.id);
+        Navigator.of(context).pushNamed(Routes.chat, arguments: chat.id);
       },
     );
   }
 
-  Widget getUsername(DocumentSnapshot chat) {
+  Widget getUsername(Chat chat) {
     return FutureBuilder(
         future: chatName(chat),
         builder: (context, snapshot) {
@@ -177,7 +180,7 @@ class ChatListPageState extends State<ChatListPage> {
 }
 
 class NewGroup extends StatefulWidget {
-  final Future<List<DocumentSnapshot>> users = getKnownUsers();
+  final Future<List<AcademicsUser>> users = getKnownUsers();
   final Map<String,String> myUsers;
   final TextEditingController controller;
 
@@ -230,12 +233,12 @@ class _NewGroupState extends State<NewGroup> {
           Expanded(
             child: SearchUser(
                 users: widget.users,
-                onUserClick: (DocumentSnapshot user) {
+                onUserClick: (AcademicsUser user) {
                   setState(() {
-                    widget.myUsers.addAll({user.id: user.get('display_name')});
+                    widget.myUsers.addAll({user.id: user.displayName});
                   });
                 },
-                removeUsersCondition: (DocumentSnapshot user) {
+                removeUsersCondition: (AcademicsUser user) {
                   return widget.myUsers.containsKey(user.id);
                 }),
           ),

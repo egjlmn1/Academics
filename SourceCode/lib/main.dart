@@ -1,6 +1,7 @@
 import 'package:academics/business/switch.dart';
+import 'package:academics/routes.dart';
 import 'package:academics/upload/chooseFolder.dart';
-import 'package:academics/cloudUtils.dart';
+import 'package:academics/cloud/firebaseUtils.dart';
 import 'package:academics/inbox/singleMessagepage.dart';
 import 'package:academics/pdf.dart';
 import 'package:academics/posts/singlePostPage.dart';
@@ -50,19 +51,19 @@ Future<String> fetchRoute() async {
     if (!user.exists) {
       //In case user closed app right when creating an account and the document wasn't created yet
       if (await Authentication.signOut()) {
-        return '/auth';
+        return Routes.auth;
       } else {
-        return '/home';
+        return Routes.home;
       }
     }
     //Signed in
     else if (user.get('new')) {
-      return '/build_profile';
+      return Routes.buildProfile;
     } else {
-      return '/home';
+      return Routes.home;
     }
   } else {
-    return '/auth';
+    return Routes.auth;
   }
 }
 
@@ -129,47 +130,44 @@ class _MyAppState extends State<MyApp> {
                   onGenerateRoute: (RouteSettings settings) {
                     //print('build route for ${settings.name}');
                     var routes = <String, WidgetBuilder>{
-                      '/': (context) => Container(),
-                      '/home': (context) =>
+                      Routes.root: (context) => Container(),
+                      Routes.home: (context) =>
                           Home(initialRoute: settings.arguments),
-                      '/auth': (context) => AuthPage(),
-                      '/build_profile': (context) => BuildProfile(),
-
-                      '/post_page': (context) =>
+                      Routes.auth: (context) => AuthPage(),
+                      Routes.buildProfile: (context) => BuildProfile(),
+                      Routes.postPage: (context) =>
                           SinglePostPage(postId: settings.arguments),
-                      '/message_page': (context) =>
+                      Routes.messagePage: (context) =>
                           SingleMessagePage(message: settings.arguments),
-                      //'/report_page': (context) => SingleMessagePage(message: settings.arguments),
-
-                      '/reports': (context) => ReportsPage(),
-                      '/user_posts': (context) =>
-                          UserFoldersPage(folderId: settings.arguments),
-                      '/user_profile': (context) =>
+                      Routes.reports: (context) => ReportsPage(),
+                      Routes.userFolder: (context) =>
+                          UserFoldersPage(settings.arguments),
+                      Routes.userProfile: (context) =>
                           UserProfile(id: settings.arguments),
-                      '/chat': (context) =>
+                      Routes.chat: (context) =>
                           ChatPage(chatId: settings.arguments),
-
-                      '/post_search': (context) => PostSearch(),
-                      '/choose_folder': (context) => ChooseFolderPage(
+                      Routes.postSearch: (context) => PostSearch(),
+                      Routes.chooseFolder: (context) => ChooseFolderPage(
                             folder: settings.arguments,
                           ),
-                      '/choose_post': (context) =>
+                      Routes.choosePost: (context) =>
                           ChoosePostPage(filter: settings.arguments),
-
-                      '/pdf': (context) => PDFViewer(url: settings.arguments),
-                      '/switch': (context) =>
+                      Routes.pdf: (context) =>
+                          PDFViewer(url: settings.arguments),
+                      Routes.switchAccount: (context) =>
                           SwitchToBusiness(isBusiness: settings.arguments),
-                      '/email_signin': (context) => EmailSignInPage(),
-
-                      '/upload_question': (context) =>
+                      Routes.emailSignIn: (context) => EmailSignInPage(),
+                      Routes.uploadQuestion: (context) =>
                           UploadPage(QuestionUploadType()),
-                      '/upload_file': (context) => UploadPage(FileUploadType()),
-                      '/upload_request': (context) =>
+                      Routes.uploadFile: (context) =>
+                          UploadPage(FileUploadType()),
+                      Routes.uploadRequest: (context) =>
                           UploadPage(RequestUploadType()),
-                      '/upload_poll': (context) => UploadPage(PollUploadType()),
-                      '/upload_confession': (context) =>
+                      Routes.uploadPoll: (context) =>
+                          UploadPage(PollUploadType()),
+                      Routes.uploadConfession: (context) =>
                           UploadPage(ConfessionUploadType()),
-                      '/upload_social': (context) =>
+                      Routes.uploadSocial: (context) =>
                           UploadPage(SocialUploadType()),
                     };
                     WidgetBuilder builder = routes[settings.name];
@@ -186,8 +184,7 @@ class _MyAppState extends State<MyApp> {
           child: FadeInImage(
               fadeInDuration: Duration(milliseconds: 300),
               placeholder: MemoryImage(kTransparentImage),
-              image: AssetImage('assets/logo.png')
-          ),
+              image: AssetImage('assets/logo.png')),
         );
       },
     );

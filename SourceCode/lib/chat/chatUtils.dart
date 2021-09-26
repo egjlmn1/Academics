@@ -1,20 +1,13 @@
-import '../cloudUtils.dart';
+import 'package:academics/user/userUtils.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-Future<String> createChat(List<String> users, {String name}) async {
-  String docId = await uploadObject(Collections.chat, {
-    'message': 'chat started',
-    'name': name,
-    'time': DateTime.now().millisecondsSinceEpoch,
-    'group': false,
-    'users': users,
-  });
-  await Future.wait(users.map((user) => uploadObject(
-      Collections.users,
-      {
-        'muted': false,
-      },
-      id: docId,
-      doc: user,
-      subCollection: Collections.chat)));
-  return docId;
+import 'model.dart';
+
+Future<String> chatName(Chat chat) async {
+  if (chat.name != null) {
+    return chat.name;
+  }
+  List<String> users = List<String>.from(chat.users);
+  users.remove(FirebaseAuth.instance.currentUser.uid);
+  return (await fetchUser(users[0])).displayName;
 }

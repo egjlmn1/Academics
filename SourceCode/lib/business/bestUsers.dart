@@ -1,7 +1,10 @@
 import 'package:academics/folders/folders.dart';
 import 'package:academics/folders/foldersUtil.dart';
+import 'package:academics/user/model.dart';
 import 'package:academics/user/userUtils.dart';
 import 'package:flutter/material.dart';
+
+import '../routes.dart';
 
 class BestUsersPage extends StatefulWidget {
 
@@ -85,7 +88,7 @@ class _BestUsersPageState extends State<BestUsersPage> {
           Expanded(
             child: RefreshIndicator(
                 onRefresh: _refreshData,
-                child: createUserPage(fetchUsers(_path), context)),
+                child: createUserPage(fetchUsers(folder: _path), context)),
           )
         else
           Expanded(
@@ -105,4 +108,39 @@ class _BestUsersPageState extends State<BestUsersPage> {
     print('refresh');
     setState(() {});
   }
+
+
+  Widget createUserPage(Future<List<AcademicsUser>> users, BuildContext context) {
+    return FutureBuilder(
+      future: users,
+      builder: (context, snapshot) {
+        if (snapshot.hasData) {
+          List<AcademicsUser> users = snapshot.data;
+          return ListView.builder(
+            shrinkWrap: true,
+            itemCount: users.length,
+            itemBuilder: (BuildContext context, int index) {
+              return TextButton(
+                child: Row(
+                  children: [
+                    Text(users[index].points.toString()),
+                    Icon(Icons.fiber_manual_record),
+                    Text(users[index].displayName),
+                  ],
+                ),
+                onPressed: () {
+                  Navigator.of(context).pushNamed(Routes.userProfile, arguments: users[index].id);
+                },
+              );
+            },
+          );
+        }
+        if (snapshot.hasError) {
+          print(snapshot.error);
+        }
+        return Container();
+      },
+    );
+  }
+
 }

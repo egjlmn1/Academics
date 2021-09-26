@@ -1,10 +1,10 @@
 import 'package:academics/posts/postBuilder.dart';
-import 'package:academics/posts/postUtils.dart';
+import 'package:academics/posts/postCloudUtils.dart';
 import 'package:academics/user/userUtils.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-import '../cloudUtils.dart';
+import '../routes.dart';
+import '../utils.dart';
 import 'message.dart';
 
 class SingleMessagePage extends StatelessWidget {
@@ -46,7 +46,7 @@ class SingleMessagePage extends StatelessWidget {
                       if (snapshot.hasData) {
                         return TextButton(
                           onPressed: () {
-                            Navigator.of(context).pushNamed('/user_profile', arguments: message.sender);
+                            Navigator.of(context).pushNamed(Routes.userProfile, arguments: message.sender);
                           },
                           child: Text(
                             'sent by ${snapshot.data.displayName}',
@@ -73,15 +73,15 @@ class SingleMessagePage extends StatelessWidget {
                       if (snapshot.hasData) {
                         return OutlinedButton(
                           onPressed: () {
-                            Navigator.of(context).pushNamed('/post_page',
+                            Navigator.of(context).pushNamed(Routes.postPage,
                                 arguments: snapshot.data.id);
                           },
                           child:
-                              PostCreator(post: snapshot.data, context: context)
+                              PostBuilder(post: snapshot.data, context: context)
                                   .buildHintPost(),
                         );
                       } else if (snapshot.hasError) {
-                        return PostCreator(post: snapshot.data, context: context)
+                        return PostBuilder(post: snapshot.data, context: context)
                             .buildHintPost();
                       }
                       return Container();
@@ -115,17 +115,13 @@ class SingleMessagePage extends StatelessWidget {
   }
 
   Function _menuActionSelect(BuildContext context) {
-    return (String choice) {
+    return (String choice) async {
       if (choice == MessageChoice.Delete.toString()) {
-        _deleteMessage(context);
+        await deleteMessage(message.id);
+        Navigator.of(context).pop();
+
       }
     };
-  }
-
-  void _deleteMessage(BuildContext context) {
-    removeFromObject(Collections.users, FirebaseAuth.instance.currentUser.uid, Collections.inbox,
-        message.toJson());
-    Navigator.of(context).pop();
   }
 }
 

@@ -1,6 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-
-import 'customWidgets.dart';
 
 class Post {
   // posts received from server and shown on screen
@@ -66,6 +65,12 @@ class Post {
     );
   }
 
+  factory Post.decode(DocumentSnapshot doc) {
+    Map<String, dynamic> data = doc.data();
+    data.addAll({'id': doc.id});
+    return Post.fromJson(data);
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'username': username,
@@ -90,12 +95,21 @@ class PostType {
   static const String Confession = 'Confession';
   static const String Social = 'Social';
 
-  static const List<String> types = [Question, File, Request, Poll, Confession, Social];
+  static const List<String> types = [
+    Question,
+    File,
+    Request,
+    Poll,
+    Confession,
+    Social
+  ];
 
   static List<String> filtered(List<bool> filter) {
-    return [for (int i=0;i<types.length;i++) if (filter[i]) types[i]];
+    return [
+      for (int i = 0; i < types.length; i++)
+        if (filter[i]) types[i]
+    ];
   }
-
 }
 
 abstract class PostDataWidget {
@@ -103,20 +117,8 @@ abstract class PostDataWidget {
 
   Map<String, dynamic> toJson();
 
-  List<Widget> buildFullPost(BuildContext context, String postId);
-
-  List<Widget> buildExtra(BuildContext context, String postId);
-
-  Widget buildHint(BuildContext context);
-
-  Widget buildAction(
-      BuildContext context, String postId, ScrollController controller) {
-    return Container();
-  }
-
-  bool hasComments();
-
   String file();
+
   List<String> getFollowers();
 }
 
@@ -126,7 +128,11 @@ class QuestionDataWidget extends PostDataWidget {
   final String acceptedAnswer;
   final List<String> followers;
 
-  QuestionDataWidget({@required this.question, this.imageId, @required this.followers, @required this.acceptedAnswer});
+  QuestionDataWidget(
+      {@required this.question,
+      this.imageId,
+      @required this.followers,
+      @required this.acceptedAnswer});
 
   factory QuestionDataWidget.fromJson(Map<String, dynamic> json) {
     return QuestionDataWidget(
@@ -139,48 +145,17 @@ class QuestionDataWidget extends PostDataWidget {
 
   @override
   Map<String, dynamic> toJson() {
-    return {'question': question, 'image': imageId, 'accepted_answer': acceptedAnswer, 'followers': followers};
-  }
-
-  @override
-  List<Widget> buildFullPost(BuildContext context, String postId) {
-    return [
-      //comments
-      TextWidget(question),
-      ImageWidget(imageId),
-    ];
-  }
-
-  @override
-  List<Widget> buildExtra(BuildContext context, String postId) {
-    return [
-      VoteWidget(postId:postId),
-      FollowWidget('Notify me when there is an answer', postId, followers),
-      Divider(height: 20),
-      CommentWidget(postId: postId, answer: true, accepted: acceptedAnswer,),
-    ];
-  }
-
-  @override
-  Widget buildHint(BuildContext context) {
-    return ImageHintWidget(description: question, imageId: imageId);
-  }
-
-  @override
-  Widget buildAction(
-      BuildContext context, String postId, ScrollController controller) {
-    return UploadComment(
-        postId: postId, hint: 'Give your answer', scrollController: controller);
+    return {
+      'question': question,
+      'image': imageId,
+      'accepted_answer': acceptedAnswer,
+      'followers': followers
+    };
   }
 
   @override
   String file() {
     return imageId;
-  }
-
-  @override
-  bool hasComments() {
-    return true;
   }
 
   @override
@@ -208,40 +183,8 @@ class FileDataWidget extends PostDataWidget {
   }
 
   @override
-  List<Widget> buildFullPost(BuildContext context, String postId) {
-    return [FileDownloadWidget(fileId, type), ];
-  }
-
-
-  @override
-  List<Widget> buildExtra(BuildContext context, String postId) {
-
-    return [
-      VoteWidget(postId:postId),
-    ];
-  }
-
-  @override
-  Widget buildHint(BuildContext context) {
-    return Column(
-      children: [
-        Icon(
-          Icons.picture_as_pdf,
-          color: Theme.of(context).hintColor,
-          size: 20,
-        )
-      ],
-    );
-  }
-
-  @override
   String file() {
     return fileId;
-  }
-
-  @override
-  bool hasComments() {
-    return false;
   }
 
   @override
@@ -251,7 +194,6 @@ class FileDataWidget extends PostDataWidget {
 }
 
 class RequestDataWidget extends PostDataWidget {
-
   final List<String> followers;
 
   RequestDataWidget({@required this.followers});
@@ -259,7 +201,6 @@ class RequestDataWidget extends PostDataWidget {
   factory RequestDataWidget.fromJson(Map<String, dynamic> json) {
     return RequestDataWidget(
       followers: List<String>.from(json['followers']),
-
     );
   }
 
@@ -269,37 +210,8 @@ class RequestDataWidget extends PostDataWidget {
   }
 
   @override
-  List<Widget> buildFullPost(BuildContext context, String postId) {
-    return [SendFilePostWidget(post: postId,)];
-  }
-
-
-  @override
-  List<Widget> buildExtra(BuildContext context, String postId) {
-
-    return [
-      FollowWidget('Notify me when there is a file', postId, followers),
-
-    ];
-  }
-
-  @override
-  Widget buildHint(BuildContext context) {
-    return Column(
-      children: [
-        TextWidget('Add file'),
-      ],
-    );
-  }
-
-  @override
   String file() {
     return null;
-  }
-
-  @override
-  bool hasComments() {
-    return false;
   }
 
   @override
@@ -335,36 +247,8 @@ class PollDataWidget extends PostDataWidget {
   }
 
   @override
-  List<Widget> buildFullPost(BuildContext context, String postId) {
-    return [
-      PollWidget(
-        poll: this,
-        postId: postId,
-      ),
-    ];
-  }
-
-
-  @override
-  List<Widget> buildExtra(BuildContext context, String postId) {
-    return [
-      VoteWidget(postId:postId),
-    ];
-  }
-
-  @override
-  Widget buildHint(BuildContext context) {
-    return Text('${polls.length} Options');
-  }
-
-  @override
   String file() {
     return null;
-  }
-
-  @override
-  bool hasComments() {
-    return false;
   }
 
   @override
@@ -392,50 +276,8 @@ class ConfessionDataWidget extends PostDataWidget {
   }
 
   @override
-  List<Widget> buildFullPost(BuildContext context, String postId) {
-    return [
-      TextWidget(confession),
-
-    ];
-  }
-
-
-  @override
-  List<Widget> buildExtra(BuildContext context, String postId) {
-    return [
-      VoteWidget(postId:postId),
-      CommentWidget(postId: postId, answer: false,),
-    ];
-  }
-
-  @override
-  Widget buildHint(BuildContext context) {
-    return Column(
-      children: [
-        Text(
-          confession,
-          style: Theme.of(context).textTheme.bodyText2,
-          maxLines: 2,
-        ),
-      ],
-    );
-  }
-
-  @override
-  Widget buildAction(
-      BuildContext context, String postId, ScrollController controller) {
-    return UploadComment(
-        postId: postId, hint: 'Comment', scrollController: controller);
-  }
-
-  @override
   String file() {
     return null;
-  }
-
-  @override
-  bool hasComments() {
-    return true;
   }
 
   @override
@@ -464,55 +306,12 @@ class SocialDataWidget extends PostDataWidget {
   }
 
   @override
-  List<Widget> buildFullPost(BuildContext context, String postId) {
-    return [
-      TextWidget(text),
-      ImageWidget(imageId),
-
-    ];
-  }
-
-
-  @override
-  List<Widget> buildExtra(BuildContext context, String postId) {
-    return [
-      VoteWidget(postId:postId),
-      CommentWidget(postId: postId, answer: false,),
-    ];
-  }
-
-  @override
-  Widget buildHint(BuildContext context) {
-    return ImageHintWidget(description: text, imageId: imageId);
-  }
-
-  @override
-  Widget buildAction(
-      BuildContext context, String postId, ScrollController controller) {
-    return UploadComment(
-        postId: postId, hint: 'Comment', scrollController: controller);
-  }
-
-  @override
   String file() {
     return imageId;
-  }
-
-  @override
-  bool hasComments() {
-    return true;
   }
 
   @override
   List<String> getFollowers() {
     return null;
   }
-}
-
-class UploadPost {
-  // posts uploaded from app and sent to the server
-}
-
-class UserInfo {
-  // object received from server that holds information about the user
 }

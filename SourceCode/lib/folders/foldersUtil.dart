@@ -1,5 +1,5 @@
-import 'package:academics/user/httpUtils.dart';
-import 'package:academics/user/user.dart';
+import 'package:academics/cloud/httpUtils.dart';
+import 'package:academics/user/model.dart';
 import 'package:academics/user/userUtils.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';

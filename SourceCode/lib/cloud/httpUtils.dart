@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:academics/folders/folders.dart';
-import 'package:academics/posts/schemes.dart';
+import 'package:academics/posts/model.dart';
 import 'package:http/http.dart' as http;
 
 Future<http.Response> fetchResponse(String path) {

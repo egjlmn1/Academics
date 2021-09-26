@@ -1,11 +1,12 @@
-import 'package:academics/cloudUtils.dart';
+import 'package:academics/chat/viewModel.dart';
 import 'package:academics/errors.dart';
 import 'package:academics/posts/postBuilder.dart';
-import 'package:academics/posts/postUtils.dart';
+import 'package:academics/posts/postCloudUtils.dart';
 import 'package:academics/user/userUtils.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
+import '../routes.dart';
 
 class ChatPage extends StatefulWidget {
   final String chatId;
@@ -17,21 +18,22 @@ class ChatPage extends StatefulWidget {
 }
 
 class _ChatPageState extends State<ChatPage> {
-  var _limit = 100;
-
   var _users = {};
+
+  ChatViewModel viewModel;
 
   TextEditingController _sendMessageController = TextEditingController();
   bool showEmoji = false;
   FocusNode focusNode = FocusNode();
 
   @override
-  Widget build(BuildContext context) {
-    if (widget.chatId != null) {
-    } else {
-      Navigator.of(context).pop();
-    }
+  void initState() {
+    super.initState();
+    viewModel = ChatViewModel(widget.chatId);
+  }
 
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(),
       body: SafeArea(
@@ -51,13 +53,7 @@ class _ChatPageState extends State<ChatPage> {
               Expanded(
                 child: Container(
                   child: StreamBuilder(
-                    stream: FirebaseFirestore.instance
-                        .collection(Collections.chat)
-                        .doc(widget.chatId)
-                        .collection(Collections.messages)
-                        .orderBy('timestamp', descending: true)
-                        .limit(_limit)
-                        .snapshots(),
+                    stream: viewModel.messages,
                     builder: (context, snapshot) {
                       if (!snapshot.hasData) {
                         return Center(
@@ -65,7 +61,7 @@ class _ChatPageState extends State<ChatPage> {
                                 valueColor: AlwaysStoppedAnimation<Color>(
                                     Colors.black)));
                       } else {
-                        var listMessage = snapshot.data.docs;
+                        List<Map<String,dynamic>> listMessage = snapshot.data;
                         return ListView.builder(
                           shrinkWrap: true,
                           padding: EdgeInsets.all(10.0),
@@ -88,9 +84,8 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  Widget buildItem(int index, DocumentSnapshot doc) {
+  Widget buildItem(int index, Map<String, dynamic> item) {
     //print(doc);
-    Map<String, dynamic> item = doc.data();
     Widget username;
     if (_users.containsKey(item['user'])) {
       username = Text(_users[item['user']]);
@@ -125,7 +120,7 @@ class _ChatPageState extends State<ChatPage> {
               TextButton(
                 child: username,
                 onPressed: () {
-                  Navigator.of(context).pushNamed('/user_profile', arguments: item['user']);
+                  Navigator.of(context).pushNamed(Routes.userProfile, arguments: item['user']);
                 },
               )
             else
@@ -141,10 +136,10 @@ class _ChatPageState extends State<ChatPage> {
                 builder: (context, snapshot) {
                   if (snapshot.hasData) {
                     return TextButton(
-                      child: PostCreator(context: context, post: snapshot.data)
+                      child: PostBuilder(context: context, post: snapshot.data)
                           .buildHintPost(),
                       onPressed: () {
-                        Navigator.of(context).pushNamed('/post_page', arguments: snapshot.data.id);
+                        Navigator.of(context).pushNamed(Routes.postPage, arguments: snapshot.data.id);
                       },
                     );
                   } if (snapshot.hasError) {
@@ -237,7 +232,7 @@ class _ChatPageState extends State<ChatPage> {
     // type: 0 = text, 1 = post
     if (content.trim() != '') {
       _sendMessageController.clear();
-      sendChatMessage(content, 0, widget.chatId);
+      viewModel.sendChatMessage(content, 0);
       //listScrollController.animateTo(0.0, duration: Duration(milliseconds: 300), curve: Curves.easeOut);
     } else {
       //Fluttertoast.showToast(msg: 'Nothing to send');
@@ -245,29 +240,5 @@ class _ChatPageState extends State<ChatPage> {
   }
 }
 
-void sendChatMessage(String content, int type, String chatId) {
-  var time = DateTime.now().millisecondsSinceEpoch;
-  uploadObject(
-      Collections.chat,
-      {
-        'user': FirebaseAuth.instance.currentUser.uid,
-        'timestamp': time,
-        'content': content,
-        'type': type
-      },
-      doc: chatId,
-      subCollection: Collections.messages);
-  FirebaseFirestore.instance
-      .collection(Collections.chat)
-      .doc(chatId)
-      .set({'message': (type == 0) ? content : 'Post', 'time': time}, SetOptions(merge: true));
-}
 
-Future<String> chatName(DocumentSnapshot chat) async {
-  if (chat.get('name') != null) {
-    return chat.get('name');
-  }
-  List<String> users = List<String>.from(chat.get('users'));
-  users.remove(FirebaseAuth.instance.currentUser.uid);
-  return (await fetchUser(users[0])).displayName;
-}
+

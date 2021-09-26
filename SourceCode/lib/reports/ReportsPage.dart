@@ -1,11 +1,13 @@
-import 'package:academics/cloudUtils.dart';
+import 'package:academics/cloud/firebaseUtils.dart';
 import 'package:academics/errors.dart';
 import 'package:academics/posts/postBuilder.dart';
-import 'package:academics/posts/postUtils.dart';
-import 'package:academics/posts/schemes.dart';
+import 'package:academics/posts/postCloudUtils.dart';
+import 'package:academics/posts/model.dart';
 import 'package:academics/reports/report.dart';
 import 'package:academics/reports/reportUtils.dart';
 import 'package:flutter/material.dart';
+
+import '../routes.dart';
 
 class ReportsPage extends StatefulWidget {
   @override
@@ -64,12 +66,12 @@ class _ReportsPageState extends State<ReportsPage> {
                           )
                         ],
                       ),
-                      PostCreator(post: reports[index].entries.first.value, context: context).buildHintPost(),
+                      PostBuilder(post: reports[index].entries.first.value, context: context).buildHintPost(),
                     ],
                   ),
                 ),
                 onPressed: () {
-                  Navigator.of(context).pushNamed('/post_page', arguments: reports[index].entries.first.value.id);
+                  Navigator.of(context).pushNamed(Routes.postPage, arguments: reports[index].entries.first.value.id);
                 },
               );
             },

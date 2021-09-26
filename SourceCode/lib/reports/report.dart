@@ -27,12 +27,12 @@ class Report {
 }
 
 class ReportReason {
-  static final String postWrongFolder = 'Post in the wrong folder';
-  static final String postInappropriate = 'Post is Inappropriate';
-  static final String postSpam = 'Post is spam';
-  static final String userInappropriate = 'User is Inappropriate';
-  static final String commentInappropriate = 'Comment is Inappropriate';
-  static final String commentSpam = 'Comment is spam';
+  static const String postWrongFolder = 'Post in the wrong folder';
+  static const String postInappropriate = 'Post is Inappropriate';
+  static const String postSpam = 'Post is spam';
+  static const String userInappropriate = 'User is Inappropriate';
+  static const String commentInappropriate = 'Comment is Inappropriate';
+  static const String commentSpam = 'Comment is spam';
 }
 
 Future<String> getReportReason(

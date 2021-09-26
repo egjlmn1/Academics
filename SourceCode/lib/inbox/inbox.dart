@@ -1,8 +1,9 @@
-import 'package:academics/posts/postUtils.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../chat/chatListPage.dart';
 import '../errors.dart';
+import '../routes.dart';
+import '../utils.dart';
 import 'message.dart';
 
 
@@ -24,7 +25,7 @@ class _InboxPageState extends State<InboxPage> {
       ),
       onPressed: () async {
         await readMessage(msg, FirebaseAuth.instance.currentUser.uid);
-        await Navigator.of(context).pushNamed('/message_page', arguments: msg);
+        await Navigator.of(context).pushNamed(Routes.messagePage, arguments: msg);
         setState(() {});
       },
       child: Container(

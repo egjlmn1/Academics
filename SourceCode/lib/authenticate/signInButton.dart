@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../routes.dart';
 import 'authUtils.dart';
 
 class SignInButton extends StatefulWidget {
@@ -103,7 +104,7 @@ class _EmailSignInButtonState extends _SignInButtonState {
 
   @override
   Future<void> login() async {
-    await Navigator.of(context).pushNamed('/email_signin');
+    await Navigator.of(context).pushNamed(Routes.emailSignIn);
   }
 
   @override

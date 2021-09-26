@@ -194,8 +194,8 @@ class ImageUploadWidget extends _UploadWidgetState {
   Object data() {
     if (required && _image == null) {
       return null;
-    } //TODO cant return null in both cases fix this and continue to file and poll (doesnt matter image is never required)
-    return _image; //Bad beacuse if not required and image is null its good
+    } //cant return null in both cases fix this and continue to file and poll (doesnt matter image is never required)
+    return _image; //Bad because if not required and image is null its good
   }
 }
 
@@ -337,7 +337,7 @@ class ChoicesUploadWidget extends _UploadWidgetState {
   TextEditingController _otherController = TextEditingController();
 
   @override
-  Widget build(BuildContext context) { //TODO fix colors and position of text field
+  Widget build(BuildContext context) {
     return Column(
       children: [
         Container(

@@ -1,7 +1,7 @@
 import 'dart:io';
 
-import 'package:academics/cloudUtils.dart';
-import 'package:academics/posts/schemes.dart';
+import 'package:academics/cloud/firebaseUtils.dart';
+import 'package:academics/posts/model.dart';
 import 'package:academics/upload/uploadWidget.dart';
 import 'package:flutter/material.dart';
 

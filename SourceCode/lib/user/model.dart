@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 
 class AcademicsUser {
@@ -50,6 +51,12 @@ class AcademicsUser {
       business: json['business'],
       folders: json['folders'].cast<String>(),
     );
+  }
+
+  factory AcademicsUser.decode(DocumentSnapshot doc) {
+    Map<String, dynamic> data = doc.data();
+    data.addAll({'id': doc.id});
+    return AcademicsUser.fromJson(data);
   }
 
   Map<String, dynamic> toJson() {

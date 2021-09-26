@@ -1,7 +1,9 @@
-import 'package:academics/cloudUtils.dart';
+import 'package:academics/cloud/firebaseUtils.dart';
 import 'package:academics/errors.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
+import '../routes.dart';
 
 class SwitchToBusiness extends StatelessWidget {
   final bool isBusiness;
@@ -44,7 +46,7 @@ class SwitchToBusiness extends StatelessWidget {
                         FirebaseAuth.instance.currentUser.uid,
                         'display_name',
                         _controller.text.trim());
-                    Navigator.of(context).pushNamedAndRemoveUntil('/home', (r) => false);
+                    Navigator.of(context).pushNamedAndRemoveUntil(Routes.home, (r) => false);
                   } else {
                     showError('Enter ${isBusiness ? 'display' : 'business'} name', context);
                   }

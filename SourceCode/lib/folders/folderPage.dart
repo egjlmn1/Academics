@@ -1,11 +1,9 @@
-import 'package:academics/cloudUtils.dart';
 import 'package:academics/errors.dart';
-import 'package:academics/posts/postUtils.dart';
-import 'package:academics/user/user.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:academics/folders/viewModel.dart';
+import 'package:academics/posts/postBuilder.dart';
 import 'package:flutter/material.dart';
 
+import '../routes.dart';
 import 'folders.dart';
 import 'foldersUtil.dart';
 
@@ -20,8 +18,7 @@ class FolderPage extends StatefulWidget {
 
 // Contains both folders? and posts
 class _FolderPageState extends State<FolderPage> {
-  String _path = 'root';
-
+  FoldersPageViewModel viewModel;
   TextEditingController folderController = TextEditingController();
 
   int _selectedPage = 0;
@@ -31,23 +28,26 @@ class _FolderPageState extends State<FolderPage> {
     super.initState();
     print('init folders');
     if (widget.folder != null) {
-      _path = widget.folder;
+      viewModel = FoldersPageViewModel(path: widget.folder);
+    } else {
+      viewModel = FoldersPageViewModel();
     }
+    viewModel.addListener(() {
+      setState(() {});
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     //print('build folders');
-    var splitted = _path.split('/');
+    var splitted = viewModel.path.split('/');
     var paths = splitted
         .map((x) => splitted.sublist(0, splitted.indexOf(x) + 1).join('/'))
         .toList();
     return Column(
       children: [
         folderPickRow(paths, (String path) {
-          setState(() {
-            _path = path;
-          });
+          viewModel.path = path;
         }),
         Container(
           color: Theme.of(context).primaryColor,
@@ -118,10 +118,9 @@ class _FolderPageState extends State<FolderPage> {
           Expanded(
             child: RefreshIndicator(
                 onRefresh: _refreshData,
-                child: createPostPage(
-                    fetchPosts(
-                        folder: Folder(path: _path, type: FolderType.folder)),
-                    context)),
+                child: PostListBuilder(
+                        posts: viewModel.getPosts(), context: context)
+                    .buildPostPage()),
           )
         else if (_selectedPage == 1)
           Expanded(
@@ -142,18 +141,12 @@ class _FolderPageState extends State<FolderPage> {
                 ),
                 Expanded(
                     child: createFolderList(
-                        fetchSubFolders(_path,
-                            prefix: folderController.text.trim()),
+                        viewModel.getFolders(folderController.text.trim()),
                         (Folder folder) {
-                  setState(() {
-                    _path = folder.path;
-                    _selectedPage = 0;
-                    folderController.clear();
-                  });
-                }, save: (AcademicsUser user, Folder folder) async {
-                  await _saveFolder(user, folder);
-                  setState(() {});
-                })),
+                  _selectedPage = 0;
+                  folderController.clear();
+                  viewModel.path = folder.path;
+                }, save: viewModel.saveFolder)),
               ],
             ),
           )
@@ -170,61 +163,39 @@ class _FolderPageState extends State<FolderPage> {
 
   Widget createMyFolderList() {
     return FutureBuilder(
-      future: getUserFolders(),
+      future: UserFoldersViewModel().folders,
       builder: (context, snapshot) {
         if (snapshot.hasData) {
-          if (snapshot.data.isEmpty) {
-            return Container();
-          }
-          return FutureBuilder(
-            future: fetchInBatches(
-                Collections.userFolders, List.from(snapshot.data.map((e) => e.path))),
-            builder: (context, snapshot) {
-              if (snapshot.hasData) {
-                List<DocumentSnapshot> items = snapshot.data;
-                items.sort((a, b) =>
-                    a.get('path').toString().compareTo(b.get('path')));
-                return ListView(
-                  shrinkWrap: true,
-                  children: List.generate(items.length, (index) {
-                    return ListTile(
-                        title: TextButton(
-                      onPressed: () {
-                        setState(() {
-                          Navigator.of(context).pushNamed('/user_posts',
-                              arguments: items[index].id);
-                        });
-                      },
-                      child: Folder(
-                              path: items[index].get('path'),
-                              type: FolderType.user)
-                          .build(),
-                    ));
-                  }),
-                );
-              }
-              if (snapshot.hasError) {
-                return errorWidget('Error fetching folders', context);
-              }
-              return Container();
-            },
+          List<Map<String, dynamic>> items = snapshot.data;
+          items.sort((a, b) =>
+              a['path'].compareTo(b['path']));
+          return ListView(
+            shrinkWrap: true,
+            children: List.generate(items.length, (index) {
+              return ListTile(
+                  title: TextButton(
+                    onPressed: () {
+                      setState(() {
+                        Navigator.of(context).pushNamed(Routes.userFolder,
+                            arguments:
+                            SingleUserFolderViewModel(items[index]['id']));
+                      });
+                    },
+                    child: Folder(
+                        path: items[index]['path'],
+                        type: FolderType.user)
+                        .build(),
+                  ));
+            }),
           );
+        }
+        if (snapshot.hasError) {
+          return errorWidget('Error fetching folders', context);
         }
         return Container();
       },
     );
   }
 
-  Future<void> _saveFolder(AcademicsUser user, Folder folder) async {
-    bool isFollowing = user.following.contains(folder.path);
 
-    if (!isFollowing) {
-      isFollowing = true;
-      await addToObject(Collections.users, user.id, 'following', folder.path);
-    } else {
-      isFollowing = false;
-      await removeFromObject(
-          Collections.users, user.id, 'following', folder.path);
-    }
-  }
 }

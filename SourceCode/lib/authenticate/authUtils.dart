@@ -1,6 +1,6 @@
-import 'package:academics/cloudUtils.dart';
+import 'package:academics/cloud/firebaseUtils.dart';
 import 'package:academics/errors.dart';
-import 'package:academics/user/user.dart';
+import 'package:academics/user/model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -8,6 +8,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+
+import '../routes.dart';
 
 class Authentication {
   static Future<FirebaseApp> initializeFirebase({
@@ -25,7 +27,7 @@ class Authentication {
 
     if (user != null) {
       // User already logged in
-      Navigator.of(context).pushReplacementNamed('/home');
+      Navigator.of(context).pushReplacementNamed(Routes.home);
     }
     return Firebase.app();
   }
@@ -143,8 +145,8 @@ void login(BuildContext context, User user, {String displayName}) async {
   await setUpUser(user, displayName: displayName);
   DocumentSnapshot doc = await getDocSnapshot(Collections.users, user.uid);
   if (doc.get('new')) {
-    Navigator.of(context).pushReplacementNamed('/build_profile');
+    Navigator.of(context).pushReplacementNamed(Routes.buildProfile);
   } else {
-    Navigator.of(context).pushReplacementNamed('/home');
+    Navigator.of(context).pushReplacementNamed(Routes.home);
   }
 }

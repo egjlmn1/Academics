@@ -1,9 +1,10 @@
 import 'package:academics/DarkTheme.dart';
 import 'package:academics/posts/postsPage.dart';
+import 'package:academics/routes.dart';
 import 'package:academics/user/profile.dart';
 import 'package:academics/upload/uploadPage.dart';
 import 'package:academics/inbox/inbox.dart';
-import 'package:academics/user/user.dart';
+import 'package:academics/user/model.dart';
 import 'package:academics/user/userUtils.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -94,7 +95,7 @@ class _HomeState extends State<Home> {
                             child: Text(
                                 'Switch to ${user.business ? 'student' : 'business'} account'),
                             onPressed: () {
-                              Navigator.of(context).pushNamed('/switch', arguments: user.business);
+                              Navigator.of(context).pushNamed(Routes.switchAccount, arguments: user.business);
                             },
                           ),
                         FutureBuilder(
@@ -109,7 +110,7 @@ class _HomeState extends State<Home> {
                                   return TextButton(
                                     child: Text('Reports page'),
                                     onPressed: () {
-                                      Navigator.of(context).pushNamed('/reports');
+                                      Navigator.of(context).pushNamed(Routes.reports);
                                     },
                                   );
                                 }
@@ -128,7 +129,7 @@ class _HomeState extends State<Home> {
                         TextButton(
                           onPressed: () async {
                             await Authentication.signOut(context: context);
-                            Navigator.of(context).pushReplacementNamed('/auth');
+                            Navigator.of(context).pushReplacementNamed(Routes.auth);
                           },
                           child: Text('Logout'),
                         ),

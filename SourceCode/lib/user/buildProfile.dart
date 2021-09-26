@@ -1,10 +1,11 @@
-import 'package:academics/cloudUtils.dart';
+import 'package:academics/cloud/firebaseUtils.dart';
 import 'package:academics/folders/folders.dart';
 import 'package:academics/folders/foldersUtil.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../exit.dart';
+import '../routes.dart';
 
 class BuildProfile extends StatefulWidget {
   @override
@@ -48,7 +49,7 @@ class _BuildProfileState extends State<BuildProfile> {
                         FirebaseAuth.instance.currentUser.uid,
                         'new',
                         false);
-                    Navigator.of(context).pushReplacementNamed('/home');
+                    Navigator.of(context).pushReplacementNamed(Routes.home);
                   }),
                 ),
               ],

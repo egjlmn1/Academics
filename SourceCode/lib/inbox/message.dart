@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-import '../cloudUtils.dart';
+import '../cloud/firebaseUtils.dart';
 
 class Message {
   String id;
@@ -53,6 +53,10 @@ Future<List<Message>> fetchMessages() async {
   List<Message> msgs = List<Message>.from(docs.map((e) =>decodeMessage(e)));
   msgs.sort((a, b) => b.time.compareTo(a.time));
   return msgs;
+}
+
+Future deleteMessage(String msgId) {
+  return deleteObject(Collections.users, msgId, doc: FirebaseAuth.instance.currentUser.uid, subCollection: Collections.inbox);
 }
 
 Message decodeMessage(DocumentSnapshot doc) {

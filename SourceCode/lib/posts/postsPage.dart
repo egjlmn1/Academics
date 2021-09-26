@@ -1,8 +1,10 @@
 import 'dart:async';
 
-import 'package:academics/posts/postUtils.dart';
-import 'package:academics/posts/schemes.dart';
+import 'package:academics/posts/postBuilder.dart';
+import 'package:academics/posts/viewmodel.dart';
 import 'package:flutter/material.dart';
+
+import '../routes.dart';
 
 class PostsPage extends StatefulWidget {
   PostsPage();
@@ -12,15 +14,18 @@ class PostsPage extends StatefulWidget {
 }
 
 class _PostsPageState extends State<PostsPage> {
-  Future<List<Post>> posts;
 
-  String lastPostId;
-  String search = '';
+  SearchPostsListViewModel viewModel;
 
   @override
   void initState() {
     super.initState();
     print('init posts');
+
+    viewModel = SearchPostsListViewModel();
+    viewModel.addListener(() {
+      setState(() {});
+    });
   }
 
   @override
@@ -35,11 +40,10 @@ class _PostsPageState extends State<PostsPage> {
               children: [
                 TextButton(
                   onPressed: () async {
-                    var s = await Navigator.of(context).pushNamed('/post_search');
+                    var s = await Navigator.of(context)
+                        .pushNamed(Routes.postSearch);
                     print(s);
-                    setState(() {
-                      search = (s==null)?search:s;
-                    });
+                    viewModel.search = s;
                   },
                   child: Container(
                     padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
@@ -51,19 +55,21 @@ class _PostsPageState extends State<PostsPage> {
                     ),
                   ),
                 ),
-                if (search != '')
+                if (viewModel.search != '')
                   Flexible(
                     child: TextButton(
                       child: Row(
                         children: [
-                          Flexible(child: Text(search, overflow: TextOverflow.ellipsis,)),
+                          Flexible(
+                              child: Text(
+                            viewModel.search,
+                            overflow: TextOverflow.ellipsis,
+                          )),
                           Icon(Icons.close),
                         ],
                       ),
                       onPressed: () {
-                        setState(() {
-                          search='';
-                        });
+                        viewModel.search = '';
                       },
                     ),
                   ),
@@ -74,10 +80,9 @@ class _PostsPageState extends State<PostsPage> {
         Expanded(
           child: RefreshIndicator(
               onRefresh: _refreshData,
-              child: createPostPage(fetchSmartPosts(search: search, limit: fetchPostsLimit, lastId: lastPostId), context, loadMore: (String id) {
-                setState(() {
-                  lastPostId=id;
-                });
+              child: PostListBuilder(posts: viewModel.postsList, context: context).buildPostPage(
+                  loadMore: (String id) {
+                viewModel.lastPostId = id;
               })),
         ),
       ],
@@ -86,10 +91,6 @@ class _PostsPageState extends State<PostsPage> {
 
   Future _refreshData() async {
     print('refresh');
-    setState(() {
-      lastPostId = null;
-    });
+    viewModel.lastPostId = null;
   }
 }
-
-

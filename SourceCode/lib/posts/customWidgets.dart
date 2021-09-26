@@ -1,19 +1,20 @@
 import 'package:academics/errors.dart';
 import 'package:academics/inbox/message.dart';
 import 'package:academics/posts/postBuilder.dart';
-import 'package:academics/posts/postUtils.dart';
-import 'package:academics/posts/schemes.dart';
+import 'package:academics/posts/model.dart';
+import 'package:academics/posts/postCloudUtils.dart';
+import 'package:academics/posts/viewmodel.dart';
 import 'package:academics/reports/report.dart';
 import 'package:academics/reports/reportUtils.dart';
-import 'package:academics/user/user.dart';
+import 'package:academics/user/model.dart';
 import 'package:academics/user/userUtils.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:percent_indicator/linear_percent_indicator.dart';
 
-import '../cloudUtils.dart';
+import '../cloud/firebaseUtils.dart';
+import '../routes.dart';
+import '../utils.dart';
 
 class PollWidget extends StatefulWidget {
   final PollDataWidget poll;
@@ -53,8 +54,8 @@ class _PollWidgetState extends State<PollWidget> {
                 widget.poll.voted
                     .addAll({FirebaseAuth.instance.currentUser.uid: index});
                 widget.poll.polls[List.from(widget.poll.polls.keys)[index]]++;
-                updateObject(
-                    Collections.posts, widget.postId, 'typeData', widget.poll.toJson());
+                updateObject(Collections.posts, widget.postId, 'typeData',
+                    widget.poll.toJson());
               });
             },
             child: Container(
@@ -133,39 +134,38 @@ class _PollWidgetState extends State<PollWidget> {
 }
 
 class ImageWidget extends StatelessWidget {
+  final SinglePostViewModel viewModel;
   final String image;
 
-  ImageWidget(this.image);
+  ImageWidget(this.image, this.viewModel);
 
   @override
   Widget build(BuildContext context) {
-    return (image != null)
-        ? FutureBuilder(
-            future: FirebaseStorage.instance.ref(image).getDownloadURL(),
-            builder: (context, snapshot) {
-              if (snapshot.hasData) {
-                return Image.network(
-                  snapshot.data,
-                  loadingBuilder: (BuildContext context, Widget child,
-                      ImageChunkEvent loadingProgress) {
-                    if (loadingProgress == null) {
-                      return child;
-                    }
-                    return Center(
-                      child: CircularProgressIndicator(
-                        value: loadingProgress.expectedTotalBytes != null
-                            ? loadingProgress.cumulativeBytesLoaded /
-                                loadingProgress.expectedTotalBytes
-                            : null,
-                      ),
-                    );
-                  },
+    return FutureBuilder(
+        future: viewModel.getFileUrl(image),
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            return Image.network(
+              snapshot.data,
+              loadingBuilder: (BuildContext context, Widget child,
+                  ImageChunkEvent loadingProgress) {
+                if (loadingProgress == null) {
+                  return child;
+                }
+                return Center(
+                  child: CircularProgressIndicator(
+                    value: loadingProgress.expectedTotalBytes != null
+                        ? loadingProgress.cumulativeBytesLoaded /
+                            loadingProgress.expectedTotalBytes
+                        : null,
+                  ),
                 );
-              } else {
-                return Container();
-              }
-            })
-        : Container();
+              },
+            );
+          } else {
+            return Container();
+          }
+        });
   }
 }
 
@@ -187,18 +187,15 @@ class TextWidget extends StatelessWidget {
 }
 
 class VoteWidget extends StatelessWidget {
-  final String postId;
+  final SinglePostViewModel viewModel;
 
-  const VoteWidget({
-    Key key,
-    @required this.postId,
-  }) : super(key: key);
+  const VoteWidget(this.viewModel);
 
   @override
   Widget build(BuildContext context) {
     return Container(
         color: Theme.of(context).cardColor,
-        child: FutureBuilder(
+        child: FutureBuilder<Widget>(
             future: _buildVotesState(),
             builder: (context, snapshot) {
               if (snapshot.hasData) {
@@ -219,15 +216,13 @@ class VoteWidget extends StatelessWidget {
     }
     List<String> liked = List<String>.from(user.liked);
     List<String> disliked = List<String>.from(user.disliked);
-    if (liked.contains(postId)) {
+    if (liked.contains(viewModel.post.id)) {
       like = true;
-    } else if (disliked.contains(postId)) {
+    } else if (disliked.contains(viewModel.post.id)) {
       dislike = true;
     }
     try {
-      Post post = await fetchPost(postId);
-      return VotesState(
-          postId, like, dislike, post.upVotes - post.downVotes, post.userid);
+      return VotesState(viewModel, like, dislike);
     } catch (e) {
       return Container();
     }
@@ -235,13 +230,12 @@ class VoteWidget extends StatelessWidget {
 }
 
 class VotesState extends StatefulWidget {
-  final String postId;
+  final SinglePostViewModel viewModel;
+
   final bool like;
   final bool dislike;
-  final int votes;
-  final String postUser;
 
-  VotesState(this.postId, this.like, this.dislike, this.votes, this.postUser);
+  VotesState(this.viewModel, this.like, this.dislike);
 
   @override
   _VotesStateState createState() => _VotesStateState();
@@ -279,7 +273,7 @@ class _VotesStateState extends State<VotesState> {
     }
     return Row(
       children: [
-        Text((widget.votes + plus).toString()),
+        Text((widget.viewModel.votes + plus).toString()),
         ToggleButtons(
           children: [
             Icon(Icons.arrow_circle_up),
@@ -303,68 +297,34 @@ class _VotesStateState extends State<VotesState> {
   Future<void> setUser(bool pressLike, bool change) async {
     if (pressLike) {
       if (_selections[0]) {
-        like(false);
+        widget.viewModel.like(false);
       } else {
-        like(true);
+        widget.viewModel.like(true);
       }
       if (change) {
-        dislike(false);
+        widget.viewModel.dislike(false);
       }
     } else {
       //press dislike
       if (_selections[1]) {
-        dislike(false);
+        widget.viewModel.dislike(false);
       } else {
-        dislike(true);
+        widget.viewModel.dislike(true);
       }
       if (change) {
-        like(false);
+        widget.viewModel.like(false);
       }
-    }
-  }
-
-  void like(bool increase) async {
-    if (increase) {
-      addToObject(Collections.users, FirebaseAuth.instance.currentUser.uid,
-          'liked', widget.postId);
-      updateObject(Collections.posts, widget.postId, 'up_votes', FieldValue.increment(1));
-      updateObject(Collections.users, widget.postUser, 'points',
-          FieldValue.increment(1));
-    } else {
-      removeFromObject(Collections.users, FirebaseAuth.instance.currentUser.uid,
-          'liked', widget.postId);
-      updateObject(
-          Collections.posts, widget.postId, 'up_votes', FieldValue.increment(-1));
-      updateObject(Collections.users, widget.postUser, 'points',
-          FieldValue.increment(-1));
-    }
-  }
-
-  void dislike(bool increase) async {
-    if (increase) {
-      addToObject(Collections.users, FirebaseAuth.instance.currentUser.uid,
-          'disliked', widget.postId);
-      updateObject(
-          Collections.posts, widget.postId, 'down_votes', FieldValue.increment(1));
-      updateObject(Collections.users, widget.postUser, 'points',
-          FieldValue.increment(-1));
-    } else {
-      removeFromObject(Collections.users, FirebaseAuth.instance.currentUser.uid,
-          'disliked', widget.postId);
-      updateObject(
-          Collections.posts, widget.postId, 'down_votes', FieldValue.increment(-1));
-      updateObject(Collections.users, widget.postUser, 'points',
-          FieldValue.increment(1));
     }
   }
 }
 
 class FollowWidget extends StatefulWidget {
-  final String postId;
-  final String text;
-  final List<String> followers;
+  final SinglePostViewModel viewModel;
 
-  FollowWidget(this.text, this.postId, this.followers);
+  final List<String> followers;
+  final String text;
+
+  FollowWidget(this.text, this.viewModel, this.followers);
 
   @override
   _FollowWidgetState createState() => _FollowWidgetState();
@@ -373,56 +333,51 @@ class FollowWidget extends StatefulWidget {
 class _FollowWidgetState extends State<FollowWidget> {
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-        future: fetchPost(widget.postId),
-        builder: (context, snapshot) {
-          if (snapshot.hasData) {
-            if (snapshot.data.userid != FirebaseAuth.instance.currentUser.uid) {
-              return Container(
-                  color: Theme.of(context).cardColor,
-                  child: TextButton(
-                      onPressed: () async {
-                        if (widget.followers
-                            .contains(FirebaseAuth.instance.currentUser.uid)) {
-                          widget.followers
-                              .remove(FirebaseAuth.instance.currentUser.uid);
-                          await removeFromObject(
-                              Collections.posts,
-                              widget.postId,
-                              'typeData.followers',
-                              FirebaseAuth.instance.currentUser.uid);
-                        } else {
-                          widget.followers
-                              .add(FirebaseAuth.instance.currentUser.uid);
-                          await addToObject(
-                              Collections.posts,
-                              widget.postId,
-                              'typeData.followers',
-                              FirebaseAuth.instance.currentUser.uid);
-                        }
-                        setState(() {});
-                      },
-                      child: Row(
-                        children: [
-                          Icon(widget.followers.contains(
-                                  FirebaseAuth.instance.currentUser.uid)
-                              ? Icons.radio_button_checked
-                              : Icons.radio_button_off),
-                          Text(widget.text),
-                        ],
-                      )));
-            }
-          }
-          return Container();
-        });
+    if (widget.viewModel.post.userid != FirebaseAuth.instance.currentUser.uid) {
+      return Container(
+          color: Theme.of(context).cardColor,
+          child: TextButton(
+              onPressed: () async {
+                if (widget.followers
+                    .contains(FirebaseAuth.instance.currentUser.uid)) {
+                  widget.followers.remove(FirebaseAuth.instance.currentUser.uid);
+                  await removeFromObject(
+                      Collections.posts,
+                      widget.viewModel.post.id,
+                      'typeData.followers',
+                      FirebaseAuth.instance.currentUser.uid);
+                } else {
+                  widget.followers.add(FirebaseAuth.instance.currentUser.uid);
+                  await addToObject(
+                      Collections.posts,
+                      widget.viewModel.post.id,
+                      'typeData.followers',
+                      FirebaseAuth.instance.currentUser.uid);
+                }
+                setState(() {});
+              },
+              child: Row(
+                children: [
+                  Icon(widget.followers
+                      .contains(FirebaseAuth.instance.currentUser.uid)
+                      ? Icons.radio_button_checked
+                      : Icons.radio_button_off),
+                  Text(widget.text),
+                ],
+              )));
+    } else {
+      return Container();
+    }
+
   }
 }
 
 class FileDownloadWidget extends StatelessWidget {
-  final String fileId;
   final String type;
+  final String fileId;
+  final SinglePostViewModel viewModel;
 
-  FileDownloadWidget(this.fileId, this.type);
+  FileDownloadWidget(this.fileId, this.type, this.viewModel);
 
   @override
   Widget build(BuildContext context) {
@@ -431,14 +386,13 @@ class FileDownloadWidget extends StatelessWidget {
       child: TextButton(
         onPressed: () async {
           try {
-            String url =  await FirebaseStorage.instance.ref(fileId).getDownloadURL();
+            String url = await viewModel.getFileUrl(fileId);
             if (url != null) {
-              Navigator.of(context).pushNamed('/pdf',
-                  arguments:url);
+              Navigator.of(context).pushNamed(Routes.pdf, arguments: url);
             } else {
               showError('Could not open file', context);
             }
-          } catch(e) {
+          } catch (e) {
             showError('Could not open file', context);
           }
         },
@@ -480,12 +434,12 @@ class ImageHintWidget extends StatelessWidget {
 
 class CommentWidget extends StatefulWidget {
   final bool answer;
-  final String postId;
   final String accepted;
 
-  const CommentWidget(
-      {Key key, @required this.answer, @required this.postId, this.accepted})
-      : super(key: key);
+  final SinglePostViewModel viewModel;
+
+  const CommentWidget(this.viewModel,
+      {@required this.answer, this.accepted});
 
   @override
   _CommentWidgetState createState() =>
@@ -495,50 +449,32 @@ class CommentWidget extends StatefulWidget {
 class _CommentWidgetState extends State<CommentWidget> {
   @override
   Widget build(BuildContext context) {
-    return Container(
-        child: FutureBuilder(
-          future: fetchPost(widget.postId),
-          builder: (context, snapshot) {
-            if (snapshot.hasError) {
-            } else if(snapshot.hasData) {
-              Post post = snapshot.data;
-              return StreamBuilder(
-                stream: FirebaseFirestore.instance
-                    .collection(Collections.posts)
-                    .doc(widget.postId)
-                    .collection(Collections.comments)
-                    .orderBy('time')
-                    .snapshots(),
-                builder: (context, snapshot) {
-                  if (snapshot.hasData) {
-                    return Column(
-                      children: [
-                        for (QueryDocumentSnapshot doc in snapshot.data.docs)
-                          buildComment(context, doc, widget.postId, post.userid)
-                      ],
-                    );
-                  }
-                  return Container();
-                },
-              );
-            }
-            return Container();
-          }
-        )
-
-        );
+    return StreamBuilder(
+      stream: widget.viewModel.comments,
+      builder: (context, snapshot) {
+        if (snapshot.hasData) {
+          return Column(
+            children: [
+              for (Map<String, dynamic> data in snapshot.data)
+                buildComment(
+                    context, data, widget.viewModel.post.id, widget.viewModel.post.userid)
+            ],
+          );
+        }
+        return Container();
+      },
+    );
   }
 
-  Comment buildComment(
-      BuildContext context, QueryDocumentSnapshot item, String postId, String postUserId) {
-    Map<String, dynamic> data = item.data();
+  Comment buildComment(BuildContext context, Map<String, dynamic> data,
+      String postId, String postUserId) {
     return Comment(
       username: data['username'],
       time: data['time'],
       text: data['text'],
       userid: data['userid'],
       postId: postId,
-      commentId: item.id,
+      commentId: data['id'],
     );
   }
 }
@@ -553,15 +489,15 @@ class _AnswersWidgetState extends _CommentWidgetState {
   }
 
   @override
-  Comment buildComment(BuildContext context, QueryDocumentSnapshot item, String postId, String postUserId) {
-    Map<String, dynamic> data = item.data();
-    return Answer(
+  Comment buildComment(BuildContext context, Map<String, dynamic> data,
+      String postId, String postUserId) {
+    return Answer(widget.viewModel,
       username: data['username'],
       time: data['time'],
       text: data['text'],
       userid: data['userid'],
       postId: postId,
-      commentId: item.id,
+      commentId: data['id'],
       accepted: accepted,
       postUserId: postUserId,
       onClick: (String id) {
@@ -720,8 +656,9 @@ class Answer extends Comment {
   final String accepted;
   final String postUserId;
   final Function onClick;
+  final SinglePostViewModel viewModel;
 
-  const Answer({
+  const Answer(this.viewModel,{
     Key key,
     @required username,
     @required userid,
@@ -748,14 +685,13 @@ class Answer extends Comment {
         width: 40,
         child: IconButton(
           onPressed: () {
-            updateObject(
-                Collections.posts, postId, 'typeData.accepted_answer', commentId);
+            updateObject(Collections.posts, postId, 'typeData.accepted_answer',
+                commentId);
             onClick(commentId);
-            notifyFollower(
-                postFollowed: postId,
+            viewModel.notifyFollower(
                 msg:
                     'An answer has been accepted on a question you wished to be notified on.',
-                postToSend: postId);
+                postToSend: viewModel.post.id);
           },
           icon: Icon(Icons.check_circle_outline),
         ),
@@ -766,7 +702,8 @@ class Answer extends Comment {
         child: IconButton(
           onPressed: () {
             if (postUserId == FirebaseAuth.instance.currentUser.uid) {
-              updateObject(Collections.posts, postId, 'typeData.accepted_answer', null);
+              updateObject(
+                  Collections.posts, postId, 'typeData.accepted_answer', null);
               onClick(null);
             }
           },
@@ -874,9 +811,9 @@ class TagsWidget extends StatelessWidget {
 }
 
 class SendFilePostWidget extends StatefulWidget {
-  final String post;
+  final SinglePostViewModel viewModel;
 
-  const SendFilePostWidget({Key key, @required this.post});
+  const SendFilePostWidget(this.viewModel);
 
   @override
   _SendFilePostWidgetState createState() => _SendFilePostWidgetState();
@@ -906,7 +843,7 @@ class _SendFilePostWidgetState extends State<SendFilePostWidget> {
                     future: fetchPost(_selectedPost),
                     builder: (context, snapshot) {
                       if (snapshot.hasData) {
-                        return PostCreator(
+                        return PostBuilder(
                                 post: snapshot.data, context: context)
                             .buildHintPost();
                       }
@@ -944,8 +881,7 @@ class _SendFilePostWidgetState extends State<SendFilePostWidget> {
   }
 
   Future sendFile() async {
-    Post post = await fetchPost(widget.post);
-    String user = post.userid;
+    String user = widget.viewModel.post.userid;
     if (user != FirebaseAuth.instance.currentUser.uid) {
       sendMessage(
           Message(
@@ -957,13 +893,12 @@ class _SendFilePostWidgetState extends State<SendFilePostWidget> {
               post: _selectedPost),
           user);
     }
-    await notifyFollower(
-        postFollowed: post.id,
+    await widget.viewModel.notifyFollower(
         msg:
             'A file has been uploaded in a request you wished to be notified on.',
         postToSend: _selectedPost);
 
-    PostCreator(post: post, context: context).deletePost();
+    PostBuilder(post: widget.viewModel.post, context: context).deletePost();
   }
 
   Widget _buildPickDialog(BuildContext context) {
@@ -974,8 +909,8 @@ class _SendFilePostWidgetState extends State<SendFilePostWidget> {
         TextButton(
           onPressed: () async {
             Navigator.of(context).pop();
-            String id = (await Navigator.of(context).pushNamed('/upload_file'))
-                as String;
+            String id = (await Navigator.of(context)
+                .pushNamed(Routes.uploadFile)) as String;
             setState(() {
               _selectedPost = id;
             });
@@ -985,8 +920,9 @@ class _SendFilePostWidgetState extends State<SendFilePostWidget> {
         TextButton(
           onPressed: () async {
             Navigator.of(context).pop();
-            String id = (await Navigator.of(context).pushNamed('/choose_post',
-                arguments: [PostType.File])) as String;
+            String id = (await Navigator.of(context)
+                    .pushNamed(Routes.choosePost, arguments: [PostType.File]))
+                as String;
             setState(() {
               _selectedPost = id;
             });
@@ -996,23 +932,4 @@ class _SendFilePostWidgetState extends State<SendFilePostWidget> {
       ],
     );
   }
-}
-
-Future<void> notifyFollower(
-    {@required String postFollowed,
-    @required String msg,
-    String postToSend}) async {
-  List<String> followers =
-      (await fetchPost(postFollowed)).typeData.getFollowers();
-  for (String follower in followers) {
-    sendMessage(
-        Message(
-            title: 'Post update',
-            msg: msg,
-            time: DateTime.now().millisecondsSinceEpoch,
-            sender: null,
-            post: postToSend),
-        follower);
-  }
-  return updateObject(Collections.posts, postFollowed, 'typeData.followers', []);
 }

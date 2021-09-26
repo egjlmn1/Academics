@@ -1,7 +1,7 @@
 import 'package:academics/reports/report.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../cloudUtils.dart';
+import '../cloud/firebaseUtils.dart';
 
 Future<void> sendReport(Report report) async {
   List<DocumentSnapshot> docs = (await FirebaseFirestore.instance.collection(Collections.reports).where('post', isEqualTo: report.post).where('reason', isEqualTo: report.reason).get()).docs;

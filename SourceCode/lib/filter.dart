@@ -1,5 +1,5 @@
-import 'package:academics/cloudUtils.dart';
-import 'package:academics/posts/schemes.dart';
+import 'package:academics/cloud/firebaseUtils.dart';
+import 'package:academics/posts/model.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
