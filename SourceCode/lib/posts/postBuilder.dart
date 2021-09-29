@@ -348,7 +348,9 @@ class PostBuilder {
   void _movePost() async {
     final path = await Navigator.of(context)
         .pushNamed(Routes.chooseFolder, arguments: post.folder);
-    viewModel.movePost(path);
+    if (path != null) {
+      viewModel.movePost(path);
+    }
   }
 
   void deletePost() async {
