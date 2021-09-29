@@ -340,7 +340,8 @@ class _FollowWidgetState extends State<FollowWidget> {
               onPressed: () async {
                 if (widget.followers
                     .contains(FirebaseAuth.instance.currentUser.uid)) {
-                  widget.followers.remove(FirebaseAuth.instance.currentUser.uid);
+                  widget.followers
+                      .remove(FirebaseAuth.instance.currentUser.uid);
                   await removeFromObject(
                       Collections.posts,
                       widget.viewModel.post.id,
@@ -359,7 +360,7 @@ class _FollowWidgetState extends State<FollowWidget> {
               child: Row(
                 children: [
                   Icon(widget.followers
-                      .contains(FirebaseAuth.instance.currentUser.uid)
+                          .contains(FirebaseAuth.instance.currentUser.uid)
                       ? Icons.radio_button_checked
                       : Icons.radio_button_off),
                   Text(widget.text),
@@ -368,7 +369,6 @@ class _FollowWidgetState extends State<FollowWidget> {
     } else {
       return Container();
     }
-
   }
 }
 
@@ -383,7 +383,7 @@ class FileDownloadWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: Theme.of(context).cardColor,
-      child: TextButton(
+      child: OutlinedButton(
         onPressed: () async {
           try {
             String url = await viewModel.getFileUrl(fileId);
@@ -418,7 +418,7 @@ class ImageHintWidget extends StatelessWidget {
             child: Icon(
               Icons.image,
               color: Theme.of(context).hintColor,
-              size: 15,
+              size: 25,
             ),
           ),
         Flexible(
@@ -438,8 +438,7 @@ class CommentWidget extends StatefulWidget {
 
   final SinglePostViewModel viewModel;
 
-  const CommentWidget(this.viewModel,
-      {@required this.answer, this.accepted});
+  const CommentWidget(this.viewModel, {@required this.answer, this.accepted});
 
   @override
   _CommentWidgetState createState() =>
@@ -456,8 +455,8 @@ class _CommentWidgetState extends State<CommentWidget> {
           return Column(
             children: [
               for (Map<String, dynamic> data in snapshot.data)
-                buildComment(
-                    context, data, widget.viewModel.post.id, widget.viewModel.post.userid)
+                buildComment(context, data, widget.viewModel.post.id,
+                    widget.viewModel.post.userid)
             ],
           );
         }
@@ -491,7 +490,8 @@ class _AnswersWidgetState extends _CommentWidgetState {
   @override
   Comment buildComment(BuildContext context, Map<String, dynamic> data,
       String postId, String postUserId) {
-    return Answer(widget.viewModel,
+    return Answer(
+      widget.viewModel,
       username: data['username'],
       time: data['time'],
       text: data['text'],
@@ -567,6 +567,7 @@ class Comment extends StatelessWidget {
           children: [
             Text(
               username,
+              style: Theme.of(context).textTheme.subtitle1,
             ),
             SizedBox(
               width: 10,
@@ -658,7 +659,8 @@ class Answer extends Comment {
   final Function onClick;
   final SinglePostViewModel viewModel;
 
-  const Answer(this.viewModel,{
+  const Answer(
+    this.viewModel, {
     Key key,
     @required username,
     @required userid,
@@ -836,44 +838,41 @@ class _SendFilePostWidgetState extends State<SendFilePostWidget> {
                 );
               },
             )
-          : Row(
+          : Column(
               children: [
-                Expanded(
-                  child: FutureBuilder(
-                    future: fetchPost(_selectedPost),
-                    builder: (context, snapshot) {
-                      if (snapshot.hasData) {
-                        return PostBuilder(
-                                post: snapshot.data, context: context)
-                            .buildHintPost();
-                      }
-                      return Container();
-                    },
-                  ),
+                FutureBuilder(
+                  future: fetchPost(_selectedPost),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasData) {
+                      return PostBuilder(
+                              post: snapshot.data, context: context)
+                          .buildHintPost();
+                    }
+                    return Container();
+                  },
                 ),
-                Flexible(
-                  child: Row(
-                    children: [
-                      IconButton(
-                        icon: Icon(Icons.close),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    OutlinedButton(
+                      child: Text('Send'),
+                      onPressed: () async {
+                        showError('Sending post...', context);
+                        await sendFile();
+                      },
+                    ),
+                    Flexible(
+                      child: OutlinedButton(
+                        child: Text('Cancel'),
                         onPressed: () {
                           setState(() {
                             _selectedPost = null;
                           });
                         },
                       ),
-                      Flexible(
-                        child: TextButton(
-                          child: Text('send'),
-                          onPressed: () async {
-                            showError('Sending post...', context);
-                            await sendFile();
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                    ),
+                  ],
+                )
               ],
             ),
       color: Theme.of(context).cardColor,
@@ -910,7 +909,7 @@ class _SendFilePostWidgetState extends State<SendFilePostWidget> {
           onPressed: () async {
             Navigator.of(context).pop();
             String id = (await Navigator.of(context)
-                .pushNamed(Routes.uploadFile)) as String;
+                .pushNamed(Routes.uploadFile, arguments: widget.viewModel.post.folder)) as String;
             setState(() {
               _selectedPost = id;
             });

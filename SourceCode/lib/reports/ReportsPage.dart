@@ -26,6 +26,9 @@ class _ReportsPageState extends State<ReportsPage> {
             print('ReportsPage ${snapshot.error}');
             return errorWidget('Error fetching reports', context);
           } if (snapshot.hasData) {
+            if (snapshot.data.isEmpty) {
+              return errorWidget('No Reports', context);
+            }
             return buildItems(snapshot.data);
           }
           return Container();

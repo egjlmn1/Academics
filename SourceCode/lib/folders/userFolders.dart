@@ -35,7 +35,7 @@ class _UploadToFoldersState extends State<UploadToFolders> {
           if (snapshot.data.isEmpty) {
             return _createFolders([]);
           }
-          return errorWidget('No folders', context);
+          return _createFolders(snapshot.data);
         }
         if (snapshot.hasError) {
           return errorWidget('Error fetching folders', context);

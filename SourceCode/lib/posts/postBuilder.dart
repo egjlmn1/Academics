@@ -1,7 +1,6 @@
 import 'package:academics/chat/chatUtils.dart';
 import 'package:academics/chat/model.dart';
 import 'package:academics/chat/viewModel.dart';
-import 'package:academics/cloud/firebaseUtils.dart';
 import 'package:academics/folders/userFolders.dart';
 import 'package:academics/posts/model.dart';
 import 'package:academics/posts/viewmodel.dart';
@@ -73,12 +72,8 @@ class PostBuilder {
     }
     return Row(
       mainAxisAlignment: MainAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(width: 70, child: _buildPostInfo()),
-        VerticalDivider(
-          color: Theme.of(context).hintColor,
-          width: 1,
-        ),
         Expanded(
           child: Container(
             padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -91,25 +86,22 @@ class PostBuilder {
                 ),
                 typeData.buildHint(context),
                 TagsWidget(tags: post.tags),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Flexible(
-                      flex: 1,
-                      child: _buildPostTimeUser(),
-                    ),
-                    if (post.folder != 'root')
-                      Flexible(
-                        flex: 1,
-                        child: _buildPostFolder(),
-                      ),
-                  ],
-                )
+                _buildPostTimeUser(),
+                if (post.folder != 'root')
+                  SizedBox(
+                    width: 10,
+                  ),
+                _buildPostFolder(),
               ],
             ),
           ),
         ),
-        _createPostMenu(),
+        SizedBox(
+            width: 70,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [_createPostMenu(), _buildPostInfo()],
+            )),
       ],
     );
   }
@@ -127,53 +119,46 @@ class PostBuilder {
   }
 
   Widget _buildPostFolder({bool hint = true}) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(
-          Icons.folder,
-          size: 10,
-          color: Theme.of(context).hintColor,
-        ),
-        Flexible(
-          child: Text(
-            post.folder.split('/').last,
-            style: TextStyle(
-              fontSize: 8.0,
-              color: Theme.of(context).accentColor,
-            ),
-            overflow: TextOverflow.ellipsis,
-            maxLines: hint ? 1 : 10,
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+      decoration: BoxDecoration(
+          border: Border.all(),
+          borderRadius: BorderRadius.all(Radius.circular(20))),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          Icon(
+            Icons.folder,
+            size: 14,
           ),
-        ),
-      ],
+          Flexible(
+            child: Text(
+              post.folder.split('/').last,
+              style: TextStyle(
+                fontSize: 12.0,
+              ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: hint ? 1 : 10,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildPostInfo() {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(
-          post.type,
-          style: TextStyle(
-            color: Theme.of(context).accentColor,
-            fontSize: 13,
-          ),
+        Icon(
+          iconByType(post.type),
+          size: 40,
         ),
-        if ((post.type != PostType.Poll) && (post.type != PostType.Request))
-          Row(
-            children: [
-              Text(
-                (post.upVotes - post.downVotes).toString(),
-                style: Theme.of(context).textTheme.bodyText2,
-              ),
-              Icon(
-                Icons.arrow_drop_up,
-                color: Theme.of(context).accentColor,
-              ),
-            ],
-          ),
+        Text(
+          '(${(post.upVotes - post.downVotes).toString()})',
+          style: Theme.of(context).textTheme.bodyText2,
+        ),
       ],
     );
   }
@@ -188,7 +173,10 @@ class PostBuilder {
             children: [
               Container(
                   margin: EdgeInsets.symmetric(horizontal: 10),
-                  child: _buildPostInfo()),
+                  child: Icon(
+                    iconByType(post.type),
+                    size: 40,
+                  )),
               Expanded(
                 child: Container(
                   child: Column(
@@ -259,7 +247,7 @@ class PostBuilder {
           AcademicsUser user = snapshot.data;
           return PopupMenuButton<String>(
             icon: Icon(
-              Icons.more_vert,
+              Icons.more_horiz,
               color: Theme.of(context).textTheme.bodyText2.color,
             ),
             onSelected: _postActionSelect,
@@ -326,8 +314,8 @@ class PostBuilder {
           context: context,
           builder: (context) {
             return AlertDialog(
-              title: Text('Search chat'),
-              content: Container(
+              title: Text('Pick chat'),
+              content: chats.isNotEmpty ? Container(
                 height: double.infinity,
                 width: 300,
                 child: ListView.builder(
@@ -348,7 +336,7 @@ class PostBuilder {
                     );
                   },
                 ),
-              ),
+              ) : errorWidget('You have no chats', context),
             );
           });
       ChatViewModel(chatId).sendChatMessage(post.id, 1);
@@ -494,11 +482,10 @@ class FileTypeBuilder extends TypeDataBuilder {
   Widget buildHint(BuildContext context) {
     return Column(
       children: [
-        Icon(
-          Icons.picture_as_pdf,
-          color: Theme.of(context).hintColor,
-          size: 20,
-        )
+        Text(dataType.type,
+            style: Theme.of(context).textTheme.bodyText2,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis)
       ],
     );
   }
@@ -522,6 +509,7 @@ class RequestTypeBuilder extends TypeDataBuilder {
   @override
   List<Widget> buildExtra(BuildContext context, String postId) {
     return [
+      VoteWidget(viewModel),
       FollowWidget(
           'Notify me when there is a file', viewModel, dataType.followers),
     ];
@@ -686,7 +674,7 @@ class PostListBuilder {
                 children: [
                   Container(
                     padding: EdgeInsets.symmetric(vertical: 40),
-                    child: Text('No posts',
+                    child: Text('No Posts',
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.headline2),
                   ),
@@ -697,8 +685,7 @@ class PostListBuilder {
               physics: AlwaysScrollableScrollPhysics(),
               children: [
                 for (Widget post in _createPostList(snapshot.data)) post,
-                if (loadMore != null &&
-                    snapshot.data.length == FetchConstant.fetchPostsLimit)
+                if (loadMore != null)
                   OutlinedButton(
                     child: Container(
                         padding: EdgeInsets.symmetric(vertical: 10),
@@ -741,6 +728,25 @@ class PostListBuilder {
           child: PostBuilder(post: post, context: context).buildHintPost(),
         )
     ];
+  }
+}
+
+IconData iconByType(String type) {
+  switch (type) {
+    case PostType.Question:
+      return Icons.help;
+    case PostType.File:
+      return Icons.insert_drive_file;
+    case PostType.Request:
+      return Icons.move_to_inbox;
+    case PostType.Poll:
+      return Icons.poll;
+    case PostType.Confession:
+      return Icons.priority_high;
+    case PostType.Social:
+      return Icons.people;
+    default:
+      return Icons.help;
   }
 }
 

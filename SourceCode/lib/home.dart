@@ -95,12 +95,14 @@ class _HomeState extends State<Home> {
                             child: Text(
                                 'Switch to ${user.business ? 'student' : 'business'} account'),
                             onPressed: () {
-                              Navigator.of(context).pushNamed(Routes.switchAccount, arguments: user.business);
+                              Navigator.of(context).pushNamed(
+                                  Routes.switchAccount,
+                                  arguments: user.business);
                             },
                           ),
                         FutureBuilder(
-                            future:
-                                fetchUser(FirebaseAuth.instance.currentUser.uid),
+                            future: fetchUser(
+                                FirebaseAuth.instance.currentUser.uid),
                             builder: (context, snapshot) {
                               if (snapshot.hasError) {
                                 return Container();
@@ -110,7 +112,8 @@ class _HomeState extends State<Home> {
                                   return TextButton(
                                     child: Text('Reports page'),
                                     onPressed: () {
-                                      Navigator.of(context).pushNamed(Routes.reports);
+                                      Navigator.of(context)
+                                          .pushNamed(Routes.reports);
                                     },
                                   );
                                 }
@@ -129,23 +132,28 @@ class _HomeState extends State<Home> {
                         TextButton(
                           onPressed: () async {
                             await Authentication.signOut(context: context);
-                            Navigator.of(context).pushReplacementNamed(Routes.auth);
+                            Navigator.of(context)
+                                .pushReplacementNamed(Routes.auth);
                           },
                           child: Text('Logout'),
                         ),
                         Row(
                           children: [
-
-                            Switch(value: Provider.of<DarkThemeProvider>(context,
-                                listen: false).darkTheme, onChanged: (bool value) {
-                              var darkThemeProvider =
-                              Provider.of<DarkThemeProvider>(context,
-                                  listen: false);
-                              darkThemeProvider.darkTheme =
-                                  value;
-                            }),
+                            Switch(
+                                value: Provider.of<DarkThemeProvider>(context,
+                                        listen: false)
+                                    .darkTheme,
+                                onChanged: (bool value) {
+                                  var darkThemeProvider =
+                                      Provider.of<DarkThemeProvider>(context,
+                                          listen: false);
+                                  darkThemeProvider.darkTheme = value;
+                                }),
                             Icon(Provider.of<DarkThemeProvider>(context,
-                                listen: false).darkTheme?Icons.dark_mode:Icons.light_mode),
+                                        listen: false)
+                                    .darkTheme
+                                ? Icons.dark_mode
+                                : Icons.light_mode),
                           ],
                         ),
                       ],
@@ -154,8 +162,18 @@ class _HomeState extends State<Home> {
                 ],
               ),
             ),
-            body: WillPopScope(onWillPop: () { return onWillPop(context); },
-            child: SafeArea(child: getPage())),
+            body: WillPopScope(
+                onWillPop: () {
+                  if (_selectedPage != Page.home) {
+                    setState(() {
+                      _selectedPage = Page.home;
+                    });
+                    return Future.value(false);
+                  } else {
+                    return onWillPop(context);
+                  }
+                },
+                child: SafeArea(child: getPage())),
             bottomNavigationBar: BottomNavigationBar(
               items: <BottomNavigationBarItem>[
                 BottomNavigationBarItem(
@@ -170,7 +188,7 @@ class _HomeState extends State<Home> {
                   icon: Icon(Icons.upload_rounded),
                   label: 'Upload',
                 ),
-                createInboxItem('Inbox', Icons.inbox),
+                createInboxItem('Inbox', Icons.mail),
                 BottomNavigationBarItem(
                   icon: Icon(Icons.person_rounded),
                   label: 'Profile',

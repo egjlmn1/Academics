@@ -1,3 +1,4 @@
+import 'package:academics/posts/postBuilder.dart';
 import 'package:academics/upload/uploadType.dart';
 import 'package:academics/upload/viewModel.dart';
 import 'package:flutter/material.dart';
@@ -8,8 +9,9 @@ import '../routes.dart';
 
 class UploadPage extends StatefulWidget {
   final UploadType _postType;
+  final String folder;
 
-  UploadPage(this._postType);
+  UploadPage(this._postType, {this.folder});
 
   @override
   _UploadPageState createState() => _UploadPageState();
@@ -20,14 +22,22 @@ class _UploadPageState extends State<UploadPage> {
   //List<String> _tags = [];
 
   UploadPageViewModel viewModel;
+  bool uploading = false;
 
   @override
   void initState() {
     super.initState();
     viewModel = UploadPageViewModel(widget._postType);
+    if (widget.folder != null) {
+      viewModel.folder = widget.folder;
+    }
   }
 
   void postClicked() async {
+    if (uploading) {
+      return;
+    }
+    uploading = true;
     var valid = isValid();
     if (valid) {
       showError('Uploading post...', context);
@@ -41,6 +51,7 @@ class _UploadPageState extends State<UploadPage> {
     } else {
       showError(widget._postType.error(), context);
     }
+    uploading = false;
   }
 
   void chooseFolder() async {
@@ -79,14 +90,16 @@ class _UploadPageState extends State<UploadPage> {
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
                       Text('Select Folder'),
-                      Container(
-                        margin: EdgeInsets.fromLTRB(20, 0, 0, 0),
-                        child: TextButton(
-                          onPressed: () {
-                            chooseFolder();
-                          },
-                          child: Container(
-                            child: Text(viewModel.folder),
+                      Flexible(
+                        child: Container(
+                          margin: EdgeInsets.fromLTRB(20, 0, 0, 0),
+                          child: TextButton(
+                            onPressed: () {
+                              chooseFolder();
+                            },
+                            child: Container(
+                              child: Text(viewModel.folder.split('/').last),
+                            ),
                           ),
                         ),
                       )
@@ -130,6 +143,7 @@ class _UploadPageState extends State<UploadPage> {
                     onPressed: () {
                       postClicked();
                     },
+
                     child: Text('Post'),
                   ),
                 )
@@ -161,7 +175,13 @@ class ChooseUploadPage extends StatelessWidget {
           for (int index = 0; index < PostType.types.length; index++)
             Flexible(
               child: TextButton(
-                child: Text(PostType.types[index], style: TextStyle(fontSize: 30),),
+                child: Row(
+                  children: [
+                    Icon(iconByType(PostType.types[index]), size: 50,),
+                    SizedBox(width: 10,),
+                    Text(PostType.types[index], style: TextStyle(fontSize: 30),),
+                  ],
+                ),
                 onPressed: () {
                   Navigator.of(context).pushNamed(Routes.uploadRoute(PostType.types[index]));
                 },

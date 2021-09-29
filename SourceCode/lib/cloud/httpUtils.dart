@@ -15,7 +15,7 @@ Future<List<Folder>> fetchHttpFolders(String folderSearch, {bool department = fa
   var decoded = jsonDecode(response.body);
   List<Map<String, dynamic>> foldersMaps = List.from(decoded);
   foldersMaps.removeWhere((f) => f['path']==folder);
-  foldersMaps.sort((a,b)=>b['type'].compareTo(a['type']));
+  //foldersMaps.sort((a,b)=>b['type'].compareTo(a['type']));
   List<Folder> folders = List.from(foldersMaps.map((e) => Folder(path: e['path'])));
   return folders;
 }

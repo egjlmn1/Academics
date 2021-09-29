@@ -14,7 +14,6 @@ class PostsPage extends StatefulWidget {
 }
 
 class _PostsPageState extends State<PostsPage> {
-
   SearchPostsListViewModel viewModel;
 
   @override
@@ -37,24 +36,8 @@ class _PostsPageState extends State<PostsPage> {
         Container(
           child: Column(children: [
             Row(
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                TextButton(
-                  onPressed: () async {
-                    var s = await Navigator.of(context)
-                        .pushNamed(Routes.postSearch);
-                    print(s);
-                    viewModel.search = s;
-                  },
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                    child: Row(
-                      children: [
-                        Text('search'),
-                        Icon(Icons.search),
-                      ],
-                    ),
-                  ),
-                ),
                 if (viewModel.search != '')
                   Flexible(
                     child: TextButton(
@@ -73,6 +56,23 @@ class _PostsPageState extends State<PostsPage> {
                       },
                     ),
                   ),
+                TextButton(
+                  onPressed: () async {
+                    var s = await Navigator.of(context)
+                        .pushNamed(Routes.postSearch);
+                    print(s);
+                    viewModel.search = s;
+                  },
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                    child: Row(
+                      children: [
+                        Icon(Icons.search),
+                        Text('search'),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
           ]),
@@ -80,8 +80,9 @@ class _PostsPageState extends State<PostsPage> {
         Expanded(
           child: RefreshIndicator(
               onRefresh: _refreshData,
-              child: PostListBuilder(posts: viewModel.postsList, context: context).buildPostPage(
-                  loadMore: (String id) {
+              child:
+                  PostListBuilder(posts: viewModel.postsList, context: context)
+                      .buildPostPage(loadMore: (String id) {
                 viewModel.lastPostId = id;
               })),
         ),

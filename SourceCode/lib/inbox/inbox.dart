@@ -66,6 +66,9 @@ class _InboxPageState extends State<InboxPage> {
         future: fetchMessages(),
         builder: (context, snapshot) {
           if (snapshot.hasData) {
+            if (snapshot.data.isEmpty) {
+              return errorWidget('No Notifications', context);
+            }
             return ListView.builder(
                 itemCount: snapshot.data.length,
                 physics: ScrollPhysics(),

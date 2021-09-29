@@ -233,9 +233,11 @@ class FileUploadWidget extends _UploadWidgetState {
               child: Text('Remove File'),
             ),
           ),
-          Text(
-            _file.path.split('/').last,
-            style: Theme.of(context).textTheme.bodyText2,
+          Flexible(
+            child: Text(
+              _file.path.split('/').last,
+              style: Theme.of(context).textTheme.bodyText2,
+            ),
           ),
         ],
       );

@@ -21,7 +21,7 @@ class _FolderPageState extends State<FolderPage> {
   FoldersPageViewModel viewModel;
   TextEditingController folderController = TextEditingController();
 
-  int _selectedPage = 0;
+  int _selectedPage = 1;
 
   @override
   void initState() {
@@ -29,6 +29,7 @@ class _FolderPageState extends State<FolderPage> {
     print('init folders');
     if (widget.folder != null) {
       viewModel = FoldersPageViewModel(path: widget.folder);
+      _selectedPage = 0;
     } else {
       viewModel = FoldersPageViewModel();
     }

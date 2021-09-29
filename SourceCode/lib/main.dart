@@ -160,7 +160,7 @@ class _MyAppState extends State<MyApp> {
                       Routes.uploadQuestion: (context) =>
                           UploadPage(QuestionUploadType()),
                       Routes.uploadFile: (context) =>
-                          UploadPage(FileUploadType()),
+                          UploadPage(FileUploadType(), folder: settings.arguments),
                       Routes.uploadRequest: (context) =>
                           UploadPage(RequestUploadType()),
                       Routes.uploadPoll: (context) =>

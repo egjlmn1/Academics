@@ -46,7 +46,7 @@ class ChatListPageState extends State<ChatListPage> {
           if (ids.isEmpty) {
             return Center(
                 child: Text(
-              'No chats',
+              'No Chats',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.headline2,
             ));

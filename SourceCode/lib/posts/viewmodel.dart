@@ -13,8 +13,11 @@ class SearchPostsListViewModel with ChangeNotifier {
   String _searchTerm = '';
   String _lastPostId;
 
+  List<Post> posts = [];
+
   set search(String value) {
     _searchTerm = value;
+    _lastPostId = null;
     notifyListeners();
   }
 
@@ -27,8 +30,14 @@ class SearchPostsListViewModel with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<List<Post>> get postsList {
-    return fetchSmartPosts(search: _searchTerm, lastId: _lastPostId);
+  Future<List<Post>> get postsList async {
+    List<Post> loadedPosts = await fetchSmartPosts(search: _searchTerm, lastId: _lastPostId);
+    if (_lastPostId != null) {
+      posts.addAll(loadedPosts);
+      return posts;
+    }
+    posts = loadedPosts;
+    return posts;
   }
 }
 

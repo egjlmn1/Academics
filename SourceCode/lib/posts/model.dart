@@ -295,6 +295,7 @@ class SocialDataWidget extends PostDataWidget {
   factory SocialDataWidget.fromJson(Map<String, dynamic> json) {
     return SocialDataWidget(
       text: json['text'],
+      imageId: json['image'],
     );
   }
 
@@ -302,6 +303,7 @@ class SocialDataWidget extends PostDataWidget {
   Map<String, dynamic> toJson() {
     return {
       'text': text,
+      'image': imageId,
     };
   }
 
